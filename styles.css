@@ -1,15 +1,17 @@
 body{
     margin: 0;
     padding: 0;
-    background-color: rgb(26, 26, 27);
+    background-color: rgb(142, 131, 139);
     font-family: "Gowun Dodum", sans-serif;
 }
 
 header{
     display: flex;
     justify-content: flex-end;
-    background-color: rgb(0, 0, 0);
+    background-color: rgb(96, 88, 94);
     margin: 0;
+
+
 }
 
 
@@ -19,38 +21,85 @@ header h1{
     color: white;
     font-family: "Gowun Dodum", sans-serif;
     margin-left: 10px;
+    margin-top: 10px;
 }
 
 
 header button{
-    background-color: black;
+    background-color: rgb(96, 88, 94);
     color: white;
     border: 0;
+    margin-top: 10px;
     font-family: "Gowun Dodum", sans-serif;
     opacity: 0.5;
     transform: opacity 0.3s ease;
+    
 }
 
 
 header button:hover{
     opacity: 1;
+    cursor: pointer;
 }
 
 
-header :nth-child(2){
+header :nth-child(3){
     margin-left: auto;
 }
 
 
 .settingsLogo{
+    margin-top: 10px;
     height: 40px;
 }
 
 
+.characterStatusBar{
+    margin: 0;
+    padding: 0;
+    background-color: rgb(128, 120, 126);
+    display: flex;
+
+}
 
 
+.characterSpriteBox{
+    width: 150px;
+    height: 150px;
+    background-color: rgb(0, 255, 255);
+    border: 1px solid rgb(128, 120, 126);
+    margin-left: 30px;
+}
+
+.playersName{
+    margin: 0;
+    padding: 0;
+    margin-left: 30px;
+    color: white;
+    font-family: "Gowun Dodum", sans-serif;
+}
 
 
+.playerMainStatus{
+    color: white;
+    padding: 10px;
+}
+
+.logoImage{
+    margin-top: 10px;
+    height: 50px;
+}
+
+
+.playerMainStatus p{
+    margin: 0;
+    padding: 0;
+}
+
+.healthBar{
+    margin-top: 0;
+    padding: 0;
+}
 
 
 .gowun-dodum-regular {
