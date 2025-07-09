@@ -10,8 +10,8 @@ header{
     justify-content: flex-end;
     background-color: rgb(96, 88, 94);
     margin: 0;
-
-
+    position: relative;
+    z-index: 10;
 }
 
 
@@ -59,8 +59,17 @@ header :nth-child(3){
     padding: 0;
     background-color: rgb(128, 120, 126);
     display: flex;
+    margin-bottom: 20px;
+    position: relative;
+    transition: transform 0.4s ease-in-out;
 
 }
+
+.characterStatusBar.isHidden{
+    transform: translateY(calc(-100%));
+}
+
+
 
 
 .characterSpriteBox{
@@ -150,6 +159,44 @@ header :nth-child(3){
     background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 10px, transparent 10px, transparent 20px );
     border-radius: 10px;
 }
+
+
+.statsBumper{
+    position: absolute;
+    bottom: -40px;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-color: rgba(51, 51, 51, 0.5);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-top: 1px solid #555;
+    transition: background-color 0.3s ease;
+}
+
+.statsBumper:hover{
+    background-color: rgba(51, 51, 51, 0.8);
+}
+
+
+.statsBumper .arrow{
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    margin-left: 10px;
+    transform: rotate(45deg);
+    transition: transform 0.4s ease;
+}
+
+.characterStatusBar.isHidden.statsBumper.arrow{
+    transform: rotate(-135deg);
+}
+
+
 
 
 .gowun-dodum-regular {
