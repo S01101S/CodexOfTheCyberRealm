@@ -70,8 +70,6 @@ header :nth-child(3){
 }
 
 
-
-
 .characterSpriteBox{
     width: 150px;
     height: 150px;
@@ -192,11 +190,9 @@ header :nth-child(3){
     transition: transform 0.4s ease;
 }
 
-.characterStatusBar.isHidden.statsBumper.arrow{
+.characterStatusBar.isHidden .statsBumper .arrow{
     transform: rotate(-135deg);
 }
-
-
 
 
 .gowun-dodum-regular {
