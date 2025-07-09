@@ -80,25 +80,75 @@ header :nth-child(3){
 }
 
 
-.playerMainStatus{
-    color: white;
-    padding: 10px;
-}
-
 .logoImage{
     margin-top: 10px;
     height: 50px;
 }
 
+.playerMainStatus{
+    color: white;
+    padding: 10px;
+}
 
 .playerMainStatus p{
     margin: 0;
     padding: 0;
 }
 
+.healthBar::-webkit-progress-bar{
+    background-color: rgb(96, 88, 94);
+    border-radius: 10px;
+}
+
+.healthBar::-webkit-progress-value{
+    background-color: rgb(51, 244, 51);
+    border-radius: 10px;
+}
+
+
 .healthBar{
     margin-top: 0;
     padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.manaBar{
+    margin-top: 0;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+
+.manaBar::-webkit-progress-bar{
+    background-color: rgb(96, 88, 94);
+    border-radius: 10px;
+}
+
+.manaBar::-webkit-progress-value{
+    background-color: rgb(39, 159, 245);
+    border-radius: 10px;
+}
+
+
+.xpBar{
+    margin-top: 0;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+
+.xpBar::-webkit-progress-bar{
+    background-color: rgb(96, 88, 94);
+    border-radius: 10px;
+}
+
+.xpBar::-webkit-progress-value{
+    background-color: rgb(39, 159, 245);
+    background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 10px, transparent 10px, transparent 20px );
+    border-radius: 10px;
 }
 
 
