@@ -259,12 +259,14 @@ header :nth-child(3){
 }
 
 @keyframes glow {
-  from {
-    text-shadow: 0 0 5px #fff;
-  }
-  to {
-    text-shadow: 0 0 5px #fff, 0 0 10px lightblue;
-  }
+    from 
+    {
+        text-shadow: 0 0 5px #fff;
+    }
+    to 
+    {
+        text-shadow: 0 0 5px #fff, 0 0 10px lightblue;
+    }
 }
 
 
@@ -287,6 +289,34 @@ header :nth-child(3){
   cursor: pointer;
 }
 
+
+.showingClasses{
+    margin: 0;
+    padding: 0;
+    display: flex;
+
+}
+
+.tryoutClassExample{
+    margin:0;
+    padding: 0;
+    margin-top: 20px;
+    background-color: rgba(0,0,0,0);
+    border: 1px solid  rgba(255,255,255,0.2);
+    box-shadow: 5px 5px 5px rgba(255,255,255,0.2);
+}
+
+.tryoutClassExample h3{
+    margin-left: 10px;
+    margin-right: 10px; 
+    font-family: "Orbitron", sans-serif;
+    font-weight: 200;
+    color: #fff;
+    text-align: center;
+    -webkit-animation: glow 1s ease-in-out infinite alternate;
+    -moz-animation: glow 1s ease-in-out infinite alternate;
+    animation: glow 1s ease-in-out infinite alternate;
+}
 
 
 .gowun-dodum-regular {
