@@ -120,7 +120,7 @@ header :nth-child(3){
     appearance: none;
 }
 
-.manaBar{
+.creativityBar{
     margin-top: 0;
     padding: 0;
     -webkit-appearance: none;
@@ -128,12 +128,12 @@ header :nth-child(3){
 }
 
 
-.manaBar::-webkit-progress-bar{
+.creativityBar::-webkit-progress-bar{
     background-color: rgb(96, 88, 94);
     border-radius: 10px;
 }
 
-.manaBar::-webkit-progress-value{
+.creativityBar::-webkit-progress-value{
     background-color: rgb(39, 159, 245);
     border-radius: 10px;
 }
@@ -196,9 +196,8 @@ header :nth-child(3){
 
 
 .modalOverlay{
-    display: none;
     position: absolute;
-    z-index: 1;
+    z-index: 100;
     left: 0;
     top: 0;
     width: 100%;
@@ -308,7 +307,7 @@ header :nth-child(3){
     padding: 0;
     display: flex;
     justify-content: space-between;
-    height: 500px;
+    height: 550px;
 
 }
 
@@ -352,8 +351,9 @@ header :nth-child(3){
 
 
 .classSprite{
+    display: block;
     height: 120px;
-    margin-left: 70px;
+    margin: auto;
 }
 
 .chooseClassButton{
@@ -398,6 +398,29 @@ header :nth-child(3){
         text-shadow: 0 0 5px #38004a, 0 0 10px rgb(116, 3, 176);
     }
 }
+
+
+
+.classDetails ul{
+    list-style-type: none;
+    color: white;   
+    -webkit-animation: glowButton 1s ease-in-out infinite alternate;
+    -moz-animation: glowButton 1s ease-in-out infinite alternate;
+    animation: glowButton 1s ease-in-out infinite alternate;
+    padding: 0;
+    text-align: center;
+}
+
+
+.statShowCase{
+    text-align: center;
+    color: white;
+    -webkit-animation: glowButton 1s ease-in-out infinite alternate;
+    -moz-animation: glowButton 1s ease-in-out infinite alternate;
+    animation: glowButton 1s ease-in-out infinite alternate;
+
+}
+
 
 
 
