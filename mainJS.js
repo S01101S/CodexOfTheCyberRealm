@@ -4,6 +4,18 @@ document.addEventListener('DOMContentLoaded', () =>{
     const statusBar = document.querySelector('.characterStatusBar');
     const bumperText = document.querySelector('.bumperText');
     const modal = document.getElementById('modal');
+    const wipeOverlay = document.getElementById('wipeOverlay');
+    const continueButton = document.getElementById('continueChosenButton');
+
+
+    continueButton.addEventListener("click", () => {
+        
+
+        continueButton.classList.add('isClicked');
+
+        wipeOverlay.classList.add('isHiding');
+
+    });
 
 
 
@@ -12,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () =>{
     const sovereignOfTheCitadelClass = document.getElementById('SovereignOfTheCitadelClass');
     const akashicClass = document.getElementById('akashicClass');
     const machinistClass = document.getElementById('machinistClass');
+
+    
 
 
     if(localStorage.getItem("PlayerProfile") !== null)
@@ -23,7 +37,19 @@ document.addEventListener('DOMContentLoaded', () =>{
 
 
     architectClass.addEventListener("click", () => {
-        
+
+        const message = ["Synchronisation with the System..... Complete", "You have been granted the class: [Architect]", "Welcome to the Codex Player"]
+        const displayMessage = document.getElementById('classChosenMessage');
+
+        let messageIndex = 0;
+        let characterIndex = 0;
+        let typeInterval;
+
+        displayMessage.innerHTML = "";
+
+
+
+
         const userSetting = {
             ClassName: "Architect",
             Level: 1,
@@ -49,6 +75,46 @@ document.addEventListener('DOMContentLoaded', () =>{
 
         const userSettingString = JSON.stringify(userSetting);
         localStorage.setItem('PlayerProfile', userSettingString);
+        
+        modal.style.display = "none";
+        wipeOverlay.classList.add('isWiping');
+
+
+        function typeChar(){
+
+            console.log("running function");
+
+            if(messageIndex >= message.length)
+            {
+                continueButton.style.opacity = 1;
+                clearInterval(typeInterval);
+                return;
+            }
+
+            const messageLine = message[messageIndex];
+            const currentChar = messageLine.charAt(characterIndex);
+
+            displayMessage.innerHTML += currentChar;
+            characterIndex++;
+
+
+            if(characterIndex >= messageLine.length)
+            {
+                messageIndex++;
+                characterIndex = 0;
+                displayMessage.innerHTML += '<br>';
+            }
+
+        }
+
+
+        typeInterval = setInterval(typeChar, 50);
+
+
+
+
+
+
         console.log("Profile Saved");
 
 
@@ -56,6 +122,16 @@ document.addEventListener('DOMContentLoaded', () =>{
     })
 
     sovereignOfTheCitadelClass.addEventListener("click", () => {
+
+        const message = ["Synchronisation with the System..... Complete", "You have been granted the class: [Sovereign of the Citadel] ", "Welcome to the Codex Player"]
+        const displayMessage = document.getElementById('classChosenMessage');
+
+        let messageIndex = 0;
+        let characterIndex = 0;
+        let typeInterval;
+
+        displayMessage.innerHTML = "";
+
 
         const userSetting = {
             ClassName: "Sovereign of the Citadel",
@@ -82,6 +158,47 @@ document.addEventListener('DOMContentLoaded', () =>{
 
         const userSettingString = JSON.stringify(userSetting);
         localStorage.setItem('PlayerProfile', userSettingString);
+        modal.style.display = "none";
+        wipeOverlay.classList.add('isWiping');
+
+
+        
+        function typeChar(){
+
+            console.log("running function");
+
+            if(messageIndex >= message.length)
+            {
+                continueButton.style.opacity = 1;
+                clearInterval(typeInterval);
+                return;
+            }
+
+            const messageLine = message[messageIndex];
+            const currentChar = messageLine.charAt(characterIndex);
+
+            displayMessage.innerHTML += currentChar;
+            characterIndex++;
+
+
+            if(characterIndex >= messageLine.length)
+            {
+                messageIndex++;
+                characterIndex = 0;
+                displayMessage.innerHTML += '<br>';
+            }
+
+        }
+
+
+        typeInterval = setInterval(typeChar, 50);
+
+
+
+
+
+
+
         console.log("Profile Saved");
 
 
@@ -90,6 +207,16 @@ document.addEventListener('DOMContentLoaded', () =>{
 
 
     akashicClass.addEventListener("click", () => {
+
+        const message = ["Synchronisation with the System..... Complete", "You have been granted the class: [Akashic] ", "Welcome to the Codex Player"]
+        const displayMessage = document.getElementById('classChosenMessage');
+
+        let messageIndex = 0;
+        let characterIndex = 0;
+        let typeInterval;
+
+        displayMessage.innerHTML = "";
+        
         
         const userSetting = {
             ClassName: "The Akashic",
@@ -117,6 +244,43 @@ document.addEventListener('DOMContentLoaded', () =>{
 
         const userSettingString = JSON.stringify(userSetting);
         localStorage.setItem('PlayerProfile', userSettingString);
+        modal.style.display = "none";
+        wipeOverlay.classList.add('isWiping');
+
+
+        function typeChar(){
+
+            console.log("running function");
+
+            if(messageIndex >= message.length)
+            {
+                continueButton.style.opacity = 1;
+                clearInterval(typeInterval);
+                return;
+            }
+
+            const messageLine = message[messageIndex];
+            const currentChar = messageLine.charAt(characterIndex);
+
+            displayMessage.innerHTML += currentChar;
+            characterIndex++;
+
+
+            if(characterIndex >= messageLine.length)
+            {
+                messageIndex++;
+                characterIndex = 0;
+                displayMessage.innerHTML += '<br>';
+            }
+
+        }
+
+
+        typeInterval = setInterval(typeChar, 50);
+        
+        
+
+
         console.log("Profile Saved");
 
 
@@ -127,6 +291,17 @@ document.addEventListener('DOMContentLoaded', () =>{
 
 
     machinistClass.addEventListener("click", () => {
+
+
+        const message = ["Synchronisation with the System..... Complete", "You have been granted the class: [Machinist] ", "Welcome to the Codex Player"];
+        const displayMessage = document.getElementById('classChosenMessage');
+
+        let messageIndex = 0;
+        let characterIndex = 0;
+        let typeInterval;
+
+        displayMessage.innerHTML = "";
+         
 
         const userSetting = {
             ClassName: "The Machinist",
@@ -145,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () =>{
             UnallocatedStatPoints: 0,
             Tasks: {Dailies: [], todos: []},
             Inventory: []
-        }
+        };
 
 
         userSetting.Efficiency = userSetting.Efficiency.valueOf() + 2;
@@ -154,6 +329,43 @@ document.addEventListener('DOMContentLoaded', () =>{
 
         const userSettingString = JSON.stringify(userSetting);
         localStorage.setItem('PlayerProfile', userSettingString);
+        modal.style.display = "none";
+        wipeOverlay.classList.add('isWiping');
+
+
+        function typeChar(){
+
+            console.log("running function");
+
+            if(messageIndex >= message.length)
+            {
+                continueButton.style.opacity = 1;
+                clearInterval(typeInterval);
+                return;
+            }
+
+            const messageLine = message[messageIndex];
+            const currentChar = messageLine.charAt(characterIndex);
+
+            displayMessage.innerHTML += currentChar;
+            characterIndex++;
+
+
+            if(characterIndex >= messageLine.length)
+            {
+                messageIndex++;
+                characterIndex = 0;
+                displayMessage.innerHTML += '<br>';
+            }
+
+        }
+
+
+        typeInterval = setInterval(typeChar, 50);
+        
+        
+
+
         console.log("Profile Saved");
 
         
@@ -162,12 +374,6 @@ document.addEventListener('DOMContentLoaded', () =>{
     })
 
 
-
-    window.onclick = function(event){
-        if(event.target == modal){
-            modal.style.display = "none";
-        }
-    }
 
 
     statsBumper.addEventListener("click", () =>{
