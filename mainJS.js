@@ -6,17 +6,25 @@ document.addEventListener('DOMContentLoaded', () =>{
     const modal = document.getElementById('modal');
     const wipeOverlay = document.getElementById('wipeOverlay');
     const continueButton = document.getElementById('continueChosenButton');
+    const statsButton = document.getElementById('statsButton');
+    const statsScreen = document.getElementById('statsScreen');
 
 
     continueButton.addEventListener("click", () => {
         
-
         continueButton.classList.add('isClicked');
 
         wipeOverlay.classList.add('isHiding');
 
     });
 
+
+    statsButton.addEventListener("click", () => {
+
+
+        statsScreen.style.visibility = "visible";   
+
+    });
 
 
 
