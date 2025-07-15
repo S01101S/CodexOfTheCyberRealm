@@ -8,6 +8,19 @@ document.addEventListener('DOMContentLoaded', () =>{
     const continueButton = document.getElementById('continueChosenButton');
     const statsButton = document.getElementById('statsButton');
     const statsScreen = document.getElementById('statsScreen');
+    const architectClass = document.getElementById('architectClass');
+    const sovereignOfTheCitadelClass = document.getElementById('SovereignOfTheCitadelClass');
+    const akashicClass = document.getElementById('akashicClass');
+    const machinistClass = document.getElementById('machinistClass');
+    const closeStatWindow = document.getElementById('closeStatWindow');
+
+
+
+    if(localStorage.getItem("PlayerProfile") !== null)
+    {
+        modal.style.display = "none";
+        console.log("saved profile found");
+    }
 
 
     continueButton.addEventListener("click", () => {
@@ -19,28 +32,58 @@ document.addEventListener('DOMContentLoaded', () =>{
     });
 
 
+    closeStatWindow.addEventListener("click", () => {
+        statsScreen.style.visibility = "hidden";
+    })
+
     statsButton.addEventListener("click", () => {
 
-
         statsScreen.style.visibility = "visible";   
+        const savedProfile = localStorage.getItem("PlayerProfile");
+        const showClassNameOnStatScreen = document.getElementById('showClassNameOnStatScreen');
+        const showLevelOnStatScreen = document.getElementById('showLevelOnStatScreen');
+        const showHealthOnStatScreen = document.getElementById('showHealthOnStatScreen');
+        const showCreativityOnStatScreen = document.getElementById('showCreativityOnStatScreen');
+        const showXPOnStatScreen = document.getElementById('showXPOnStatScreen');
+        const showProcessingOnStatScreen = document.getElementById('showProcessingOnStatScreen');
+        const showResilienceOnStatScreen = document.getElementById('showResilienceOnStatScreen');
+        const showEfficiencyOnStatScreen = document.getElementById('showEfficiencyOnStatScreen');
+        const showLogicOnStatScreen = document.getElementById('showLogicOnStatScreen');
+        const showStatPointOnStatScreen = document.getElementById('showStatPointOnStatScreen');
+        const healthBarWidth = document.getElementById('healthBarWidth');
+        const creativityBarWidth = document.getElementById('creativityBarWidth');
+        const xpBarWidth = document.getElementById('xpBarWidth');
+
+        if(savedProfile !== null)
+        {
+            console.log("profile found to display stats");
+
+            const playerData = JSON.parse(savedProfile);
+            const healthPercentage = (playerData.CurrentHealth / playerData.MaxHealth) * 100;
+            const creativityPercentage = (playerData.CurrentCreativity / playerData.MaxCreativity) * 100;
+            const xpPercentage = (playerData.CurrentXP / playerData.NextLevelXP) * 100;
+
+            showClassNameOnStatScreen.innerHTML = `Class: ${playerData.ClassName}`;
+            showLevelOnStatScreen.innerHTML = `${playerData.Level}`;
+            showHealthOnStatScreen.innerHTML = `${playerData.CurrentHealth} / ${playerData.MaxHealth}`;
+            healthBarWidth.style.width = `${healthPercentage}%`;
+            showCreativityOnStatScreen.innerHTML = `${playerData.CurrentCreativity} / ${playerData.MaxCreativity}`;
+            creativityBarWidth.style.width = `${creativityPercentage}%`;
+            showXPOnStatScreen.innerHTML = `${playerData.CurrentXP} / ${playerData.NextLevelXP}`;
+            xpBarWidth.style.width = `${xpPercentage}%`;
+            showProcessingOnStatScreen.innerHTML = `${playerData.Processing}`;
+            showResilienceOnStatScreen.innerHTML = `${playerData.Resilience}`;
+            showEfficiencyOnStatScreen.innerHTML = `${playerData.Efficiency}`;
+            showLogicOnStatScreen.innerHTML = `${playerData.Logic}`;
+            showStatPointOnStatScreen.innerHTML = `Available Stat Points: ${playerData.UnallocatedStatPoints}`
+
+        }
+
+
+
 
     });
 
-
-
-    const architectClass = document.getElementById('architectClass');
-    const sovereignOfTheCitadelClass = document.getElementById('SovereignOfTheCitadelClass');
-    const akashicClass = document.getElementById('akashicClass');
-    const machinistClass = document.getElementById('machinistClass');
-
-    
-
-
-    if(localStorage.getItem("PlayerProfile") !== null)
-    {
-        modal.style.display = "none";
-        console.log("saved profile found");
-    }
 
 
 

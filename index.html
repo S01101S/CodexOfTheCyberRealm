@@ -181,40 +181,104 @@
 
             <header><p></p></header>
 
+            
 
             <div class="statsContent">
 
-                <h1>STATS</h1>
+                <h1 class="glow">STATS</h1>
+
+                <button id="closeStatWindow" class="close">&times;</button>
 
                 <hr>
 
-                <p class="showClassOnStatScreen" class="glow">Class: </p>
+                <p id="showClassNameOnStatScreen" class="showClassOnStatScreen" class="glow"></p>
 
 
                 <div class="wrapper">
 
-                    
+                    <div class="leftColumn">
 
-                    <div class="leftColumn" class="glow">
-                        <p>Level: </p>
-                        <p>Health: </p>
-                        <p>Creativity: </p>
-                        <p>XP: </p>
+                        <div class="statRow">
+                            <span class="statLabel">Level:</span>
+                            <span class="statValue" id="showLevelOnStatScreen"></span>
+                        </div>
+
+
+                        <div class="statRow">
+                            <span class="statLabel">Health:</span>
+
+                            <div class="statBlock">
+
+                                <div class="progressBarStats">
+                                    <div id="healthBarWidth" class="progressBarStatsValue"></div>
+                                </div>
+                                
+                                <span class="statValue" id="showHealthOnStatScreen"></span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="statRow">
+                            <span class="statLabel">Creativity:</span>
+
+                            <div class="statBlock">
+
+                                <div class="progressBarStats">
+                                    <div id="creativityBarWidth" class="progressBarStatsValue"></div>
+                                </div>
+
+                                <span class="statValue" id="showCreativityOnStatScreen"></span>
+                            </div>
+                            
+                        </div>
+
+
+                        <div class="statRow">
+                            <span class="statLabel">XP:</span>
+
+                            <div class="statBlock">
+                                <div class="progressBarStats">
+                                    <div id="xpBarWidth" class="progressBarStatsValue"></div>
+                                </div>
+
+                                <span class="statValue" id="showXPOnStatScreen"></span>
+                            </div>
+
+                            
+                        </div>
+                    
                     </div>
 
                     <div class="rightColumn">
 
-                        <p>Processing: </p>
-                        <p>Resilience: </p>
-                        <p>Efficiency: </p>
-                        <p>Logic: </p>
+                        <div class="statRow">
+                            <span class="statLabel">Processing:</span>
+                            <span class="statValue" id="showProcessingOnStatScreen"></span>
+                        </div>
+
+                        <div class="statRow">
+                            <span class="statLabel">Resilience:</span>
+                            <span class="statValue" id="showResilienceOnStatScreen"></span>
+                        </div>
+
+                        <div class="statRow">
+                            <span class="statLabel">Efficiency:</span>
+                            <span class="statValue" id="showEfficiencyOnStatScreen"></span>
+                        </div>
+
+                        <div class="statRow">
+                            <span class="statLabel">Logic:</span>
+                            <span class="statValue" id="showLogicOnStatScreen"></span>
+                        </div>
+
 
                     </div>
 
                 </div>
                 
                 
-                <p class="showStatPoints" class="glow">Available Stat Points: </p>
+                <p class="showStatPoints" id="showStatPointOnStatScreen"></p>
 
                 
                 

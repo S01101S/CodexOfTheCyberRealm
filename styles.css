@@ -634,16 +634,18 @@ header :nth-child(3){
     display: flex;
     flex-direction: column;
     height: 100%;
-
-
 }
 
 
 .statsContent h1{
+    font-family: "Gowun Dodum", sans-serif;
     color: white;
     padding: 0;
     margin: 0;
     padding-top: 70px;
+    -webkit-animation: glow 1s ease-in-out infinite alternate;
+    -moz-animation: glow 1s ease-in-out infinite alternate;
+    animation: glow 1s ease-in-out infinite alternate;  
 }
 
 
@@ -655,9 +657,10 @@ header :nth-child(3){
 
 
 .wrapper{
+    margin-left: 100px;
     display: flex;
     justify-content: space-around;
-    margin-bottom: 120px;
+    margin-bottom: 80px;
     color: white;
     -webkit-animation: glow 1s ease-in-out infinite alternate;
     -moz-animation: glow 1s ease-in-out infinite alternate;
@@ -669,10 +672,8 @@ header :nth-child(3){
     margin: 0;
     padding: 0;
     margin-top: 50px;
-}
-
-.leftColumn p{
-    margin-top: 10px;
+    display: inline-block;
+    text-align: left;
 }
 
 .rightColumn{
@@ -682,15 +683,17 @@ header :nth-child(3){
     margin-right: 150px;
 }
 
-.rightColumn p{
-    margin-top: 10px;
+.rightColumn .statRow:not(:first-child){
+    margin-top: 39px;
 }
 
 
+
 .showStatPoints{
+    font-family: 'Courier New', Courier, monospace;
     color: white;
     margin: 0;
-    margin-right: 80px;
+    margin-right: 30px;
     -webkit-animation: glow 1s ease-in-out infinite alternate;
     -moz-animation: glow 1s ease-in-out infinite alternate;
     animation: glow 1s ease-in-out infinite alternate;
@@ -698,15 +701,108 @@ header :nth-child(3){
 
 
 .showClassOnStatScreen{
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 20px;
     color: white;
     margin: 0;
     padding: 0;
     margin-top: 20px;
-    margin-right: 150px;
     -webkit-animation: glow 1s ease-in-out infinite alternate;
     -moz-animation: glow 1s ease-in-out infinite alternate;
     animation: glow 1s ease-in-out infinite alternate;
 }
+
+
+.statRow {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    font-family: 'Courier New', Courier, monospace;
+    color: white;
+}
+
+.statLabel {
+    width: 100px;   
+    text-align: right;
+    margin: 0;
+    margin-right: 10px;
+    padding-top: 0;
+}
+
+.statValue {
+    text-align: left;
+    font-family: 'Courier New', Courier, monospace;
+    min-width: 120px; 
+    display: inline-block;
+        
+}
+
+
+.progressBarStats{
+    margin-top: 22px;
+    width: 200px;
+    height: 12px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 25px;   
+    position: relative; 
+    display: flex;
+    align-items: center;
+
+}
+
+.progressBarStatsValue{
+    height: 4px;
+    margin-left: 5px;
+    margin-right: 5px;
+    width: 0%;
+    border-radius: 5px;
+    background-color: #87cefa;
+    box-shadow: 0 0 8px 2px rgba(135, 206, 250, 0.7);
+    transition: width 0.5s ease-in-out;
+}
+
+
+
+.statBlock{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.statBlock .statValue{
+    margin: 0;
+    padding: 0;
+    margin-top: 5px;
+    margin-right: 65px;
+    min-width: 0;
+}
+
+
+.close{
+    font-size: 40px;
+    color: white;
+    z-index: 20;
+    top: 10%;
+    right: 9%;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7); 
+    cursor: pointer;
+    line-height: 1;   
+    transition: color 0.2s;
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    width: 60px;
+}
+
+.close:hover{
+    color:rgb(108, 137, 254);
+    border: 1px solid rgba(108, 137, 254, 0.5);
+}
+
+
+
 
 
 .gowun-dodum-regular {
