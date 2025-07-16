@@ -13,14 +13,19 @@ document.addEventListener('DOMContentLoaded', () =>{
     const akashicClass = document.getElementById('akashicClass');
     const machinistClass = document.getElementById('machinistClass');
     const closeStatWindow = document.getElementById('closeStatWindow');
-
+    const showHealthOnMainScreen = document.getElementById('showHealthOnMainScreen');
+    const showCreativityOnMainScreen = document.getElementById('showCreativityOnMainScreen');
+    const showXPOnMainScreen = document.getElementById('showXPOnMainScreen');
 
 
     if(localStorage.getItem("PlayerProfile") !== null)
     {
         modal.style.display = "none";
         console.log("saved profile found");
+        
+        updateUI();
     }
+
 
 
     continueButton.addEventListener("click", () => {
@@ -28,13 +33,65 @@ document.addEventListener('DOMContentLoaded', () =>{
         continueButton.classList.add('isClicked');
 
         wipeOverlay.classList.add('isHiding');
-
+        updateUI();
     });
 
 
     closeStatWindow.addEventListener("click", () => {
         statsScreen.style.visibility = "hidden";
+        updateUI();
     })
+
+
+
+    function updateUI(){
+
+        const savedProfile = localStorage.getItem("PlayerProfile");
+
+        if(savedProfile)
+        {
+
+            const mainScreenHealthBarWidth  = document.getElementById('mainScreenHealthBarWidth');
+            const mainScreenCreativityBarWidth = document.getElementById('mainScreenCreativityBarWidth');
+            const mainScreenXPBarWidth = document.getElementById('mainScreenXPBarWidth');
+            const showCharacterSpriteMainScreen = document.getElementById('showCharacterSpriteMainScreen');
+
+            const playerData = JSON.parse(savedProfile);
+            const healthPercentageMainScreen = (playerData.CurrentHealth / playerData.MaxHealth) * 100;
+            const creavtivityPercentageMainScreen = (playerData.CurrentCreativity / playerData.MaxCreativity) * 100;
+            const xpPercentageMainScreen = (playerData.CurrentXP / playerData.NextLevelXP) * 100;
+
+            showHealthOnMainScreen.innerHTML = `${playerData.CurrentHealth} / ${playerData.MaxHealth}`;
+            mainScreenHealthBarWidth.style.width = `${healthPercentageMainScreen}%`;
+
+            showCreativityOnMainScreen.innerHTML = `${playerData.CurrentCreativity} / ${playerData.MaxCreativity}`;
+            mainScreenCreativityBarWidth.style.width = `${creavtivityPercentageMainScreen}%`;
+
+            showXPOnMainScreen.innerHTML = `${playerData.CurrentXP} / ${playerData.NextLevelXP}`;
+            mainScreenXPBarWidth.style.width = `${xpPercentageMainScreen}%`;
+
+
+            if(playerData.ClassName === "Sovereign of the Citadel")
+            {
+                showCharacterSpriteMainScreen.src = 'images/SovereignOfTheCitadel.png';
+            }
+
+            else if(playerData.ClassName === "Machinist")
+            {
+                showCharacterSpriteMainScreen.alt = 'Sprite In Progress';
+            }
+
+            else if(playerData.ClassName === "Architect")
+            {
+                showCharacterSpriteMainScreen.alt = 'Sprite In Progress';
+            }
+
+            else if(playerData.ClassName === "Akashic")
+            {
+                showCharacterSpriteMainScreen.alt = 'Sprite In Progress';
+            }
+        }
+    }
 
     statsButton.addEventListener("click", () => {
 
@@ -97,9 +154,6 @@ document.addEventListener('DOMContentLoaded', () =>{
         let typeInterval;
 
         displayMessage.innerHTML = "";
-
-
-
 
         const userSetting = {
             ClassName: "Architect",
@@ -270,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () =>{
         
         
         const userSetting = {
-            ClassName: "The Akashic",
+            ClassName: "Akashic",
             Level: 1,
             Processing: 5,
             Resilience: 5,
@@ -355,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () =>{
          
 
         const userSetting = {
-            ClassName: "The Machinist",
+            ClassName: "Machinist",
             Level: 1,
             Processing: 5,
             Resilience: 5,
