@@ -28,8 +28,8 @@
         <div class="characterStatusBar">
 
             <div>
-                <p class="playersName">Name PlaceHolder</p>
                 <div class="characterSpriteBox">
+                    <img id="showCharacterSpriteMainScreen" class="characterSprite" src="">
                 </div>
             </div>
             
@@ -37,11 +37,37 @@
             <div class="playerMainStatus">
                 
                 <p>Health</p>
-                <progress class="healthBar" value="50" max="100"></progress>
+                <div class="statBlock">
+
+                    <div class="progressBarStats">
+                        <div id="mainScreenHealthBarWidth" class="healthValueMainScreen"></div>
+                    </div>
+                    
+                    <span class="statValue" id="showHealthOnMainScreen"></span>
+                    
+                </div>
+
+
                 <p>Creativity</p>
-                <progress class="creativityBar" value="50" max="100"></progress>
+                <div class="statBlock">
+
+                    <div class="progressBarStats">
+                        <div id="mainScreenCreativityBarWidth" class="CreativityValueMainScreen"></div>
+                    </div>
+
+                    <span class="statValue" id="showCreativityOnMainScreen"></span>
+                </div>
+
                 <p>XP</p>
-                <progress class="xpBar" value="50" max="100"></progress>
+                <div class="statBlock">
+
+                    <div class="progressBarStats">
+                        <div id="mainScreenXPBarWidth" class="xpValueMainScreen"></div>
+                    </div>
+                    
+                    <span class="statValue" id="showXPOnMainScreen"></span>
+                </div>
+
             </div>
 
 
