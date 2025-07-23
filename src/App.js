@@ -533,6 +533,14 @@ function App() {
 
   const handleToggleToDo = (taskID) => {
       
+    const originalToDo = playerProfile.Tasks.todos.find(task => task.id === taskID);
+    let completedToDoXp = 0;
+
+    if(originalToDo.completed === false)
+    {
+      completedToDoXp += XP_PER_TODO_TASK;
+    }
+
     const updatedToDo = playerProfile.Tasks.todos.map((task, index) =>{
 
 
@@ -548,13 +556,23 @@ function App() {
     })
 
 
-    setPlayerProfile(prevProfile => ({
-      ...playerProfile, 
-      Tasks:{
-        ...prevProfile.Tasks,
-        todos: updatedToDo
+    setPlayerProfile(prevProfile => {
+      
+      const newCurrentXp = playerProfile.CurrentXP + completedToDoXp;
+
+      let updatedProfile = {
+        ...prevProfile,
+        CurrentXP: newCurrentXp,
+        Tasks: {
+          ...prevProfile.Tasks,
+          todos: updatedToDo
+        }
       }
-    }));
+
+      updatedProfile = checkLevelUp(updatedProfile);
+
+      return updatedProfile
+    });
   }
 
 
