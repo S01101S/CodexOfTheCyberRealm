@@ -37,7 +37,7 @@ const createInitialProfile = (className) => {
       break;
     case 'The Akashic':
       baseStats.Logic += 2;
-      baseStats.Efficiency += 1;
+      baseStats.Processing += 1;
       break;
     case 'The Machinist':
       baseStats.Efficiency += 2;
@@ -218,13 +218,16 @@ const WipeOverlay = ({ chosenClass, onContinue }) => {
   );
 };
 
-const StatsScreen = ({ onClose, playerProfile }) => {
+const StatsScreen = ({ onClose, playerProfile, onAllocateStat }) => {
     if (!playerProfile) return null;
 
-    const StatRow = ({ label, value, children }) => (
+    const pointsToAllocate = playerProfile.UnallocatedStatPoints > 0;
+
+    const StatRow = ({ label, value, children, canAllocate, onAllocate, statName}) => (
         <div className="flex items-center mb-1.5 font-courier text-white">
             <span className="w-[100px] text-right mr-2.5">{label}:</span>
             {value && <span className="text-left min-w-[120px] inline-block">{value}</span>}
+            {canAllocate && (<button onClick={() => onAllocate(statName)} className="bg-transparent border border-white/50 w-[30px] h-[30px] cursor-pointer hover:text-blue-400 hover:border-blue-400/50"> + </button>)}
             {children}
         </div>
     );
@@ -256,10 +259,10 @@ const StatsScreen = ({ onClose, playerProfile }) => {
                         <StatRow label="XP"><ProgressBar percentage={(playerProfile.CurrentXP / playerProfile.NextLevelXP) * 100} valueText={`${playerProfile.CurrentXP} / ${playerProfile.NextLevelXP}`} /></StatRow>
                     </div>
                     <div className="mt-[20px] mr-[150px] space-y-[39px]">
-                        <StatRow label="Processing" value={playerProfile.Processing} />
-                        <StatRow label="Resilience" value={playerProfile.Resilience} />
-                        <StatRow label="Efficiency" value={playerProfile.Efficiency} />
-                        <StatRow label="Logic" value={playerProfile.Logic} />
+                        <StatRow label="Processing" value={playerProfile.Processing} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Processing"/>
+                        <StatRow label="Resilience" value={playerProfile.Resilience} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Resilience"/>
+                        <StatRow label="Efficiency" value={playerProfile.Efficiency} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Efficiency"/>
+                        <StatRow label="Logic" value={playerProfile.Logic} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Logic"/>
                     </div>
                 </div>
                 <p className="font-courier text-white m-0 mr-7 animate-glow">Available Stat Points: {playerProfile.UnallocatedStatPoints}</p>
@@ -427,6 +430,54 @@ function App() {
       currentProfile.NextLevelXP = Math.floor(currentProfile.NextLevelXP * 1.5);
       currentProfile.UnallocatedStatPoints += 1;
 
+      if(currentProfile.ClassName === "The Architect")
+      {
+        currentProfile.Logic += 2;
+        currentProfile.Efficiency += 2;
+        currentProfile.Processing += 1;
+        currentProfile.Resilience += 1;
+        currentProfile.CurrentHealth += 7;
+        currentProfile.MaxHealth += 7;
+        currentProfile.CurrentCreativity += 6;
+        currentProfile.MaxCreativity += 6;
+      }
+
+      else if(currentProfile.ClassName === "Sovereign of the Citadel")
+      {
+        currentProfile.Logic += 2;
+        currentProfile.Efficiency += 1;
+        currentProfile.Processing += 1;
+        currentProfile.Resilience += 2;
+        currentProfile.CurrentHealth += 4;
+        currentProfile.MaxHealth += 4;
+        currentProfile.CurrentCreativity += 10;
+        currentProfile.MaxCreativity += 10;
+      }
+
+      else if(currentProfile.ClassName === "The Akashic")
+      {
+        currentProfile.Logic += 2;
+        currentProfile.Efficiency += 1;
+        currentProfile.Processing += 2;
+        currentProfile.Resilience += 1;
+        currentProfile.CurrentHealth += 5;
+        currentProfile.MaxHealth += 5;
+        currentProfile.CurrentCreativity += 7;
+        currentProfile.MaxCreativity += 7;
+      }
+
+      else if(currentProfile.ClassName === "The Machinist")
+      {
+        currentProfile.Logic += 1;
+        currentProfile.Efficiency += 2;
+        currentProfile.Processing += 1;
+        currentProfile.Resilience += 2;
+        currentProfile.CurrentHealth += 10;
+        currentProfile.MaxHealth += 10;
+        currentProfile.CurrentCreativity += 4;
+        currentProfile.MaxCreativity += 4;
+      }
+
       console.log("You leveled Up");
     }
 
@@ -533,6 +584,14 @@ function App() {
 
   const handleToggleToDo = (taskID) => {
       
+    const originalToDo = playerProfile.Tasks.todos.find(task => task.id === taskID);
+    let completedToDoXp = 0;
+
+    if(originalToDo.completed === false)
+    {
+      completedToDoXp += XP_PER_TODO_TASK;
+    }
+
     const updatedToDo = playerProfile.Tasks.todos.map((task, index) =>{
 
 
@@ -548,79 +607,103 @@ function App() {
     })
 
 
-    setPlayerProfile(prevProfile => ({
-      ...playerProfile, 
-      Tasks:{
-        ...prevProfile.Tasks,
-        todos: updatedToDo
+    setPlayerProfile(prevProfile => {
+      
+      const newCurrentXp = playerProfile.CurrentXP + completedToDoXp;
+
+      let updatedProfile = {
+        ...prevProfile,
+        CurrentXP: newCurrentXp,
+        Tasks: {
+          ...prevProfile.Tasks,
+          todos: updatedToDo
+        }
       }
-    }));
+
+      updatedProfile = checkLevelUp(updatedProfile);
+
+      return updatedProfile
+    });
   }
 
+  const allocateStatPoint = (statLabel) => {
 
-    useEffect(() =>{
-      try{
-        localStorage.setItem("PlayerProfile", JSON.stringify(playerProfile));
-      }
-      catch (error){
-        console.error("Error saving player profile to localStorage");
-      }
-    }, [playerProfile]);
+    if(playerProfile.UnallocatedStatPoints > 0)
+    {
+      setPlayerProfile(prevProfile => ({
+        ...prevProfile,
+        [statLabel]: prevProfile[statLabel] + 1,
+        UnallocatedStatPoints: prevProfile.UnallocatedStatPoints - 1
+      }))
+    }
+
+  
+  } 
 
 
-    useEffect(() => {
+  useEffect(() =>{
+    try{
+      localStorage.setItem("PlayerProfile", JSON.stringify(playerProfile));
+    }
+    catch (error){
+      console.error("Error saving player profile to localStorage");
+    }
+  }, [playerProfile]);
 
-      const intervalID = setInterval(() => {
 
-        let changesMade = false;
+  useEffect(() => {
 
-        const updatedDailyTasks = playerProfile.Tasks.Dailies.map((task) => {
+    const intervalID = setInterval(() => {
 
-          const currentTime = new Date().getTime();
-          
-          const hasExpired = task.expirationTime && currentTime > task.expirationTime;
+      let changesMade = false;
 
-          if(task.recurringTask && hasExpired)
-          {
-            changesMade = true;
-            const newCreatedTime = currentTime;
-            const twentyFourHrsInMs = 24 * 60 * 60 * 1000;
-            const newExpirationTime = newCreatedTime + twentyFourHrsInMs;
-            return{
-              ...task, 
-              completed: false,
-              createdTime: newCreatedTime,
-              expirationTime: newExpirationTime
-            }
-          }
-          else if(hasExpired)
-          {
-            changesMade = true;
-            return null;
-          }
-          else
-          {
-            return task;  
-          }
+      const updatedDailyTasks = playerProfile.Tasks.Dailies.map((task) => {
 
-        })
+        const currentTime = new Date().getTime();
+        
+        const hasExpired = task.expirationTime && currentTime > task.expirationTime;
 
-        const finalChanges = updatedDailyTasks.filter(filteredTask => filteredTask !== null && filteredTask !== undefined);
-
-        if(changesMade)
+        if(task.recurringTask && hasExpired)
         {
-          setPlayerProfile(prevProfile => ({
-            ...prevProfile,
-            Tasks:{
-              ...prevProfile.Tasks,
-              Dailies: finalChanges
-            }
-          }));
+          changesMade = true;
+          const newCreatedTime = currentTime;
+          const twentyFourHrsInMs = 24 * 60 * 60 * 1000;
+          const newExpirationTime = newCreatedTime + twentyFourHrsInMs;
+          return{
+            ...task, 
+            completed: false,
+            createdTime: newCreatedTime,
+            expirationTime: newExpirationTime
+          }
         }
-      }, 5000);
+        else if(hasExpired)
+        {
+          changesMade = true;
+          return null;
+        }
+        else
+        {
+          return task;  
+        }
 
-      return () => clearInterval(intervalID);
-    }, [playerProfile]);
+      })
+
+      const finalChanges = updatedDailyTasks.filter(filteredTask => filteredTask !== null && filteredTask !== undefined);
+
+      if(changesMade)
+      {
+        setPlayerProfile(prevProfile => ({
+          ...prevProfile,
+          Tasks:{
+            ...prevProfile.Tasks,
+            Dailies: finalChanges
+          }
+        }));
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalID);
+  }, [playerProfile]);
 
 
   // Determine if the class selection modal should be visible
@@ -631,7 +714,7 @@ function App() {
       {/* Conditional Rendering of Modals and Overlays */}
       {isClassModalVisible && <ClassSelectionModal onClassSelect={handleClassSelect} />}
       {showWipe && <WipeOverlay chosenClass={playerProfile?.ClassName} onContinue={handleContinueFromWipe} />}
-      {isStatsScreenVisible && <StatsScreen onClose={() => setStatsScreenVisible(false)} playerProfile={playerProfile} />}
+      {isStatsScreenVisible && <StatsScreen onClose={() => setStatsScreenVisible(false)} playerProfile={playerProfile} onAllocateStat={allocateStatPoint}/>}
       {isDailyModalVisible && <DailyInputModal onClose={() => setDailyModalVisible(false)} onConfirm={handleAddDailyTask} />}
       {isToDoModalVisible && <ToDoInputModal onClose={() => setToDoModalVisible(false)} onConfirm={handleTodoTask} />}
 
