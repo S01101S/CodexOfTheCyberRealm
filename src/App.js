@@ -4,6 +4,7 @@ import {v4 as uuidv4 } from "uuid";
 
 const XP_PER_DAILY_TASK = 4;
 const XP_PER_TODO_TASK = 7;
+const MISSED_DAILY_PENALTY = 5;
 
 const createInitialProfile = (className) => {
   const baseStats = {
@@ -50,33 +51,58 @@ const createInitialProfile = (className) => {
 };
 
 
-const Header = ({ onStatsClick }) => (
-  <header className="flex items-center justify-end bg-header-bg text-white relative z-10 p-2.5 h-[50px]">
-    <img className="h-[50px] mr-2.5" src="/images/logo.png" alt="Logo" />
-    <h1 className="font-gowun-dodum text-white mr-auto mt-2.5 ml-2.5 text-[30px]">Codex</h1>
-    
-    {['Skill_Tree', 'Inventory'].map(text => (
-      <button key={text} className="bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
-        {text}
+const Header = ({ onStatsClick, playerProfile }) => {
+
+  const pointsToAllocate = playerProfile ? playerProfile.UnallocatedStatPoints > 0 : false;
+
+  return (
+    <header className="flex items-center justify-end bg-header-bg relative z-10 p-2.5 h-[50px]">
+      <img className="h-[50px] mr-2.5" src="/images/logo.png" alt="Logo" />
+      <h1 className="font-gowun-dodum text-white mr-auto mt-2.5 ml-2.5 text-[30px]">Codex</h1>
+      
+      {['Skill_Tree', 'Inventory'].map(text => (
+        <button key={text} className="bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
+          {text}
+        </button>
+      ))}
+      <button onClick={onStatsClick} className={`bg-transparent border-0 font-gowun-dodum transition-opacity duration-300 p-2.5 ${pointsToAllocate ? `animate-pulse-custom`: `text-white opacity-50 hover:opacity-100`}`}>
+        Stats
       </button>
-    ))}
-    <button onClick={onStatsClick} className="bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
-      Stats
-    </button>
-    <button className="bg-transparent border-0 opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
-      <img className="h-[40px]" src="/images/settingsIcon.png" alt="Settings" />
-    </button>
-  </header>
-);
+      <button className="bg-transparent border-0 opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
+        <img className="h-[40px]" src="/images/settingsIcon.png" alt="Settings" />
+      </button>
+
+      <style>
+        {`
+        @keyframes pulse-custom { 
+          0%, 100% {
+            color: #8B5CF6; 
+            opacity-100;
+          }
+          50% {
+            color: #3B82F6; 
+            opacity-100;
+          }
+        } 
+
+        .animate-pulse-custom { 
+          animation: pulse-custom 1.5s infinite alternate; 
+        }
+        `}
+      </style>
+    </header>
+  );
+};
 
 const CharacterStatus = ({ playerProfile, isHidden, onToggle }) => {
+
   if (!playerProfile) return null;
 
   const healthPercentage = (playerProfile.CurrentHealth / playerProfile.MaxHealth) * 100;
   const creativityPercentage = (playerProfile.CurrentCreativity / playerProfile.MaxCreativity) * 100;
   const xpPercentage = (playerProfile.CurrentXP / playerProfile.NextLevelXP) * 100;
 
-  const StatBar = ({ title, currentValue, maxValue, percentage, barClass }) => (
+  const StatBar = ({ title, currentValue, maxValue, percentage, barClass,  }) => (
     <>
       <p className="font-courier m-0 p-0 mb-1 mt-1">{title}</p>
       <div className="flex items-center gap-2.5">
@@ -109,7 +135,7 @@ const CharacterStatus = ({ playerProfile, isHidden, onToggle }) => {
         </div>
       </div>
       <div onClick={onToggle} className="absolute -bottom-10 left-0 w-full h-10 bg-black/50 hover:bg-black/70 text-white flex justify-center items-center cursor-pointer border-t border-[#555] transition-colors z-[1]">
-        <span>{isHidden ? 'Show Stats' : 'Hide Stats'}</span>
+        <span>{isHidden ? 'Show_Stats' : 'Hide_Stats'}</span>
         <i className={`border-solid border-white border-b-2 border-r-2 inline-block p-1 ml-2.5 transition-transform duration-400 ${isHidden ? 'rotate-45' : '-rotate-[135deg]'}`}></i>
       </div>
     </div>
@@ -273,25 +299,32 @@ const StatsScreen = ({ onClose, playerProfile, onAllocateStat }) => {
 };
 
 const TaskManagement = ({ onAddDailyClick, onToDoClick, tasks, isHidden, onToggleDaily, onToggleToDo }) => {
-    const TaskColumn = ({ title, onAddClick, taskList, onToggleItem }) => (
-        <div className={`mt-10 transition-transform duration-400 ease-in-out ${isHidden ? '-translate-y-2/5' : 'translate-y-0'}`}>
-            <div className="flex items-center relative w-[300px] ml-[50px] bg-[rgba(186,186,186,0.5)]">
-                <header className="font-courier text-white text-center text-xl flex-grow">
-                    {title}
-                </header>
-                <button onClick={onAddClick} className="absolute top-1/2 -translate-y-1/2 right-2.5 z-10 text-xl rounded-full w-5 h-5 flex items-center justify-center bg-gray-200 text-black">+</button>
+    const TaskColumn = ({ title, onAddClick, taskList, onToggleItem }) => {
+        const isDailyColumn = title === "Dailies";
+        const isToDoColumn = title === "To-Do";
+        const filteredTaskList = isToDoColumn ? taskList.filter(task => !task.completed) : taskList;
+
+        return (
+            <div className={`mt-10 transition-transform duration-400 ease-in-out ${isHidden ? '-translate-y-2/5' : 'translate-y-0'}`}>
+                <div className="flex items-center relative w-[300px] ml-[50px] bg-[rgba(186,186,186,0.5)]">
+                    <header className="font-courier text-white text-center text-xl flex-grow">
+                        {title}
+                    </header>
+                    <button onClick={onAddClick} className="absolute top-1/2 -translate-y-1/2 right-2.5 z-10 text-xl rounded-full w-5 h-5 flex items-center justify-center bg-gray-200 text-black">+</button>
+                </div>
+                <ul className="m-0 p-0 border border-white/50 w-[300px] ml-[50px] min-h-[350px] bg-white/50">
+                    {filteredTaskList.map((task) => (
+                        <li
+                            key={task.id}
+                            className={`list-none border p-3 font-courier flex items-center overflow-wrap break-all transition-all duration-300 ease-in-out ${isDailyColumn && task.completed ? 'bg-gray-700 border-gray-800 text-gray-400 line-through' : 'bg-purple-600 border-purple-800 text-white'}`}>
+                            <input type="checkbox" checked={task.completed} onChange={() => onToggleItem(task.id)} className=" appearance-none w-6 h-6 shrink-0 border border-white bg-transparent rounded-sm cursor-pointer relative mr-2 checked:bg-purple-500 checked:border-white checked:after:content-[''] checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 checked:after:w-2 checked:after:h-4 checked:after:border-white checked:after:border-b-2 checked:after:border-r-2 checked:after:rotate-45"/>
+                            <span className="flex-grow min-w-0">{task.text}</span>
+                        </li>
+                    ))}
+                </ul>
             </div>
-            <ul className="m-0 p-0 border border-white/50 w-[300px] ml-[50px] min-h-[350px] bg-white/50">
-                {taskList
-                  .filter(task => !task.completed)
-                  .map((task, index) => (
-                    <li key={task.id} className={`list-none border border-purple-800 p-3 font-courier text-white bg-purple-600 flex items-center overflow-wrap: word-break: break-all ${task.completed ? 'bg-green-500' : 'bg-purple-600'}`}>
-                      <input type="checkbox" checked={task.completed} onChange={() => onToggleItem(task.id)} className="appearance-none w-6 h-6 shrink-0 border border-white bg-white bg-transparent rounded-sm cursor-pointer relative mr-2 checked:bg-purple-500 checked:border-white checked:after:content-[''] checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 checked:after:w-2 checked:after:h-4 checked:after:border-white checked:after:border-b-2 checked:after:border-r-2 checked:after:rotate-45"/>
-                      {task.text}</li>
-                ))}
-            </ul>
-        </div>
-    );
+        );
+    };
     return (
         <div className={`flex space-x-8 transition-transform ${isHidden ? '-translate-y-[200px]' : ''}`}>
             <TaskColumn title="Dailies" onAddClick={onAddDailyClick} taskList={tasks?.Dailies || []} onToggleItem={onToggleDaily}/>
@@ -546,6 +579,10 @@ function App() {
     {
       completedDailyXp = XP_PER_DAILY_TASK;
     }
+    else if(originalDaily.completed === true)
+    {
+      completedDailyXp = -XP_PER_DAILY_TASK;
+    }
 
     const updatedDaily = playerProfile.Tasks.Dailies.map((task, index) => {
 
@@ -564,7 +601,21 @@ function App() {
 
     setPlayerProfile(prevProfile => {
       
-      const newCurrentXp = playerProfile.CurrentXP + completedDailyXp;
+      let finalXP = completedDailyXp;
+
+      if(finalXP > 0)
+      {
+        finalXP += Math.floor(prevProfile.Logic * 0.5);
+      }
+
+      console.log(finalXP);
+
+      let newCurrentXp = playerProfile.CurrentXP + finalXP;
+
+      if(newCurrentXp < 0)
+      {
+        newCurrentXp = 0;
+      }
 
       let updatedProfile = {
         ...prevProfile,
@@ -608,8 +659,15 @@ function App() {
 
 
     setPlayerProfile(prevProfile => {
+
+      let finalXP = completedToDoXp;
+
+      if(finalXP > 0)
+      {
+        finalXP += Math.floor(prevProfile.Logic * 0.5);
+      }
       
-      const newCurrentXp = playerProfile.CurrentXP + completedToDoXp;
+      const newCurrentXp = playerProfile.CurrentXP + finalXP;
 
       let updatedProfile = {
         ...prevProfile,
@@ -653,9 +711,12 @@ function App() {
 
   useEffect(() => {
 
+
     const intervalID = setInterval(() => {
 
       let changesMade = false;
+      let hpLost = 0;
+      let hpReduction = Math.floor(playerProfile.Resilience * 0.5);
 
       const updatedDailyTasks = playerProfile.Tasks.Dailies.map((task) => {
 
@@ -665,6 +726,12 @@ function App() {
 
         if(task.recurringTask && hasExpired)
         {
+          if(task.completed === false)
+          {
+            hpLost += MISSED_DAILY_PENALTY;
+            hpLost += (1 * playerProfile.Level);
+            changesMade = true;
+          }
           changesMade = true;
           const newCreatedTime = currentTime;
           const twentyFourHrsInMs = 24 * 60 * 60 * 1000;
@@ -678,6 +745,7 @@ function App() {
         }
         else if(hasExpired)
         {
+          hpLost += MISSED_DAILY_PENALTY
           changesMade = true;
           return null;
         }
@@ -692,13 +760,32 @@ function App() {
 
       if(changesMade)
       {
-        setPlayerProfile(prevProfile => ({
-          ...prevProfile,
-          Tasks:{
-            ...prevProfile.Tasks,
-            Dailies: finalChanges
+        setPlayerProfile(prevProfile => {
+
+          let newCurrentHP = prevProfile.CurrentHealth - hpLost;
+          newCurrentHP += hpReduction;
+
+          console.log(hpReduction);
+
+          if(newCurrentHP < 0)
+          {
+            newCurrentHP = 0;
           }
-        }));
+
+          if(newCurrentHP > prevProfile.MaxHealth)
+          {
+            newCurrentHP = prevProfile.MaxHealth;
+          }
+
+          return {
+            ...prevProfile,
+            CurrentHealth: newCurrentHP,
+            Tasks:{
+              ...prevProfile.Tasks,
+              Dailies: finalChanges
+            }
+          }
+        });
       }
     }, 5000);
 
@@ -719,7 +806,7 @@ function App() {
       {isToDoModalVisible && <ToDoInputModal onClose={() => setToDoModalVisible(false)} onConfirm={handleTodoTask} />}
 
       
-      <Header onStatsClick={() => setStatsScreenVisible(true)} />
+      <Header onStatsClick={() => setStatsScreenVisible(true)} playerProfile={playerProfile} />
       <CharacterStatus 
         playerProfile={playerProfile} 
         isHidden={isStatusBarHidden} 
