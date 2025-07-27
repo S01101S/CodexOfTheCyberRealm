@@ -5,6 +5,14 @@ import {v4 as uuidv4 } from "uuid";
 const XP_PER_DAILY_TASK = 4;
 const XP_PER_TODO_TASK = 7;
 const MISSED_DAILY_PENALTY = 5;
+const CREATIVITY_LOSS_PER_TODO = 5;
+const CREATIVITY_REGEN = 2;
+const CREATIVITY_REGEN_INTERVAL_MS = 60000;
+const CRIT_PER_PROCESSING_POINT = 0.05;
+const CRIT_XP_MULTIPLIER = 1.5;
+const CREATIVITY_COST_REDUCTION_PER_EFFICIENCY_POINT = 0.2;
+const CREATIVITY_REGEN_PER_EFFICIENCY_POINT = 0.5;
+
 
 const createInitialProfile = (className) => {
   const baseStats = {
@@ -94,9 +102,45 @@ const Header = ({ onStatsClick, playerProfile }) => {
   );
 };
 
+
+const Notification = ({message, type, onDismiss}) => {
+
+  const baseClasses = "fixed top-5 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-lg text-white z-50 transition-all duration-500 ease-out transform";
+  let typeClass = "";
+
+
+  if(type === "Level")
+  {
+    typeClass = "bg-green-600 border border-green-700";
+  }
+  else if(type === "Error")
+  {
+    typeClass = "bg-red-600 border border-red-700";
+  }
+  else if(type === "Crit")
+  {
+    typeClass = "bg-yellow-600 border border-yellow-700";
+  }
+
+
+  return (
+    <div className={`${baseClasses} ${typeClass}`}>
+      <div className="flex items-center justify-between">
+        <span className="font-bold text-lg">{message}</span>
+        <button onClick={onDismiss} className="ml-4 text-white hover:text-gray-400 text-xl leading-none">
+          &times;
+        </button>
+      </div>
+    </div>
+  )
+};
+
+
+
+
 const CharacterStatus = ({ playerProfile, isHidden, onToggle }) => {
 
-  if (!playerProfile) return null;
+  if (!playerProfile) return null; 
 
   const healthPercentage = (playerProfile.CurrentHealth / playerProfile.MaxHealth) * 100;
   const creativityPercentage = (playerProfile.CurrentCreativity / playerProfile.MaxCreativity) * 100;
@@ -298,8 +342,8 @@ const StatsScreen = ({ onClose, playerProfile, onAllocateStat }) => {
     );
 };
 
-const TaskManagement = ({ onAddDailyClick, onToDoClick, tasks, isHidden, onToggleDaily, onToggleToDo }) => {
-    const TaskColumn = ({ title, onAddClick, taskList, onToggleItem }) => {
+const TaskManagement = ({ onAddDailyClick, onToDoClick, tasks, isHidden, onToggleDaily, onToggleToDo, showNotification }) => {
+    const TaskColumn = ({ title, onAddClick, taskList, onToggleItem, showNotificationForColumn }) => {
         const isDailyColumn = title === "Dailies";
         const isToDoColumn = title === "To-Do";
         const filteredTaskList = isToDoColumn ? taskList.filter(task => !task.completed) : taskList;
@@ -317,7 +361,7 @@ const TaskManagement = ({ onAddDailyClick, onToDoClick, tasks, isHidden, onToggl
                         <li
                             key={task.id}
                             className={`list-none border p-3 font-courier flex items-center overflow-wrap break-all transition-all duration-300 ease-in-out ${isDailyColumn && task.completed ? 'bg-gray-700 border-gray-800 text-gray-400 line-through' : 'bg-purple-600 border-purple-800 text-white'}`}>
-                            <input type="checkbox" checked={task.completed} onChange={() => onToggleItem(task.id)} className=" appearance-none w-6 h-6 shrink-0 border border-white bg-transparent rounded-sm cursor-pointer relative mr-2 checked:bg-purple-500 checked:border-white checked:after:content-[''] checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 checked:after:w-2 checked:after:h-4 checked:after:border-white checked:after:border-b-2 checked:after:border-r-2 checked:after:rotate-45"/>
+                            <input type="checkbox" checked={task.completed} onChange={() => onToggleItem(task.id, showNotificationForColumn)} className=" appearance-none w-6 h-6 shrink-0 border border-white bg-transparent rounded-sm cursor-pointer relative mr-2 checked:bg-purple-500 checked:border-white checked:after:content-[''] checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 checked:after:w-2 checked:after:h-4 checked:after:border-white checked:after:border-b-2 checked:after:border-r-2 checked:after:rotate-45"/>
                             <span className="flex-grow min-w-0">{task.text}</span>
                         </li>
                     ))}
@@ -327,8 +371,8 @@ const TaskManagement = ({ onAddDailyClick, onToDoClick, tasks, isHidden, onToggl
     };
     return (
         <div className={`flex space-x-8 transition-transform ${isHidden ? '-translate-y-[200px]' : ''}`}>
-            <TaskColumn title="Dailies" onAddClick={onAddDailyClick} taskList={tasks?.Dailies || []} onToggleItem={onToggleDaily}/>
-            <TaskColumn title="To-Do" onAddClick={onToDoClick} taskList={tasks?.todos || []} onToggleItem={onToggleToDo} />
+            <TaskColumn title="Dailies" onAddClick={onAddDailyClick} taskList={tasks?.Dailies || []} onToggleItem={onToggleDaily} showNotificationForColumn={showNotification}/>
+            <TaskColumn title="To-Do" onAddClick={onToDoClick} taskList={tasks?.todos || []} onToggleItem={onToggleToDo} showNotificationForColumn={showNotification} />
         </div>
     );
 };
@@ -432,6 +476,7 @@ function App() {
   const [isDailyModalVisible, setDailyModalVisible] = useState(false);
   const [isToDoModalVisible, setToDoModalVisible] = useState(false);
   const [showWipe, setShowWipe] = useState(false);
+  const [notification, setNotification] = useState(null);
 
 
   // Save profile to localStorage whenever it changes
@@ -452,7 +497,29 @@ function App() {
   };
 
 
-  const checkLevelUp = (updatedProfile) => {
+  const showNotification = (message, type = 'level', duration = 3000) => {
+    setNotification({message, type});
+
+    if (window._notificationTimer)
+    { 
+    clearTimeout(window._notificationTimer);
+    }
+
+    const timer = setTimeout(() => {
+      setNotification(null);
+    }, duration);
+    
+    window._notificationTimer = timer;
+    
+  }
+
+  const dismissNotification = () => {
+    setNotification(null);
+  };
+
+
+
+  const checkLevelUp = (updatedProfile, showNotification) => {
     
     let currentProfile = {...updatedProfile};
 
@@ -510,6 +577,8 @@ function App() {
         currentProfile.CurrentCreativity += 4;
         currentProfile.MaxCreativity += 4;
       }
+
+      showNotification(`Congratulations! You reached level ${currentProfile.Level}!`, 'Level', 4000);
 
       console.log("You leveled Up");
     }
@@ -569,7 +638,7 @@ function App() {
   }
 
 
-  const handleToggleDaily = (taskID) => {
+  const handleToggleDaily = (taskID, showNotification) => {
 
 
     const originalDaily = playerProfile.Tasks.Dailies.find(task => task.id === taskID);
@@ -583,6 +652,7 @@ function App() {
     {
       completedDailyXp = -XP_PER_DAILY_TASK;
     }
+
 
     const updatedDaily = playerProfile.Tasks.Dailies.map((task, index) => {
 
@@ -602,6 +672,13 @@ function App() {
     setPlayerProfile(prevProfile => {
       
       let finalXP = completedDailyXp;
+      const totalCrit = Math.min(0.5, prevProfile.Processing * CRIT_PER_PROCESSING_POINT)
+
+      if(finalXP > 0 && Math.random() < totalCrit)
+      {
+        finalXP = Math.floor(finalXP * CRIT_XP_MULTIPLIER);
+        showNotification("CRITICAL SUCCESS! Bonus XP", "Crit", "3000");
+      }
 
       if(finalXP > 0)
       {
@@ -610,7 +687,7 @@ function App() {
 
       console.log(finalXP);
 
-      let newCurrentXp = playerProfile.CurrentXP + finalXP;
+      let newCurrentXp = Math.floor(playerProfile.CurrentXP + finalXP);
 
       if(newCurrentXp < 0)
       {
@@ -626,22 +703,44 @@ function App() {
         }
       }
 
-      updatedProfile = checkLevelUp(updatedProfile);
+      updatedProfile = checkLevelUp(updatedProfile, showNotification);
 
       return updatedProfile;
 
     });
   };
 
-  const handleToggleToDo = (taskID) => {
+  const handleToggleToDo = (taskID, showNotification) => {
       
     const originalToDo = playerProfile.Tasks.todos.find(task => task.id === taskID);
     let completedToDoXp = 0;
+    let baseCreativityLossPerTodo = CREATIVITY_LOSS_PER_TODO;
+    let creativityLoss = 0;
+
+    if(playerProfile.Level >= 10)
+    {
+      baseCreativityLossPerTodo = 12;
+    }
+
 
     if(originalToDo.completed === false)
     {
+      let efficiencyCreativityLoss = playerProfile.Efficiency * CREATIVITY_COST_REDUCTION_PER_EFFICIENCY_POINT;
+      let reuctionCreativityAmount = baseCreativityLossPerTodo - efficiencyCreativityLoss;
+      creativityLoss = Math.max(1, reuctionCreativityAmount);
+
+      if(playerProfile.CurrentCreativity < creativityLoss)
+      {
+        showNotification("Not enough creativity", "Error", 3000);
+        return;
+      }
+
       completedToDoXp += XP_PER_TODO_TASK;
+
+
     }
+  
+
 
     const updatedToDo = playerProfile.Tasks.todos.map((task, index) =>{
 
@@ -662,23 +761,43 @@ function App() {
 
       let finalXP = completedToDoXp;
 
+      creativityLoss = Math.floor(creativityLoss);
+
+      let finalCreativity = prevProfile.CurrentCreativity - creativityLoss;
+      const totalCrit = Math.min(0.5, prevProfile.Processing * CRIT_PER_PROCESSING_POINT)
+
+      console.log(creativityLoss);
+
+      if(finalXP > 0 && Math.random() < totalCrit)
+      {
+        finalXP = finalXP * CRIT_XP_MULTIPLIER;
+        showNotification("CRITICAL SUCCESS! Bonus XP", "Crit", "3000");
+      }
+
+      if(finalCreativity < 0)
+      {
+        finalCreativity = 0;
+      }
+
+
       if(finalXP > 0)
       {
         finalXP += Math.floor(prevProfile.Logic * 0.5);
       }
       
-      const newCurrentXp = playerProfile.CurrentXP + finalXP;
+      let newCurrentXp = playerProfile.CurrentXP + finalXP;
 
       let updatedProfile = {
         ...prevProfile,
         CurrentXP: newCurrentXp,
+        CurrentCreativity: finalCreativity,
         Tasks: {
           ...prevProfile.Tasks,
           todos: updatedToDo
         }
       }
 
-      updatedProfile = checkLevelUp(updatedProfile);
+      updatedProfile = checkLevelUp(updatedProfile, showNotification);
 
       return updatedProfile
     });
@@ -708,6 +827,38 @@ function App() {
     }
   }, [playerProfile]);
 
+
+  useEffect(() => {
+
+    if(!playerProfile)
+    {
+      return;
+    }
+
+    const intervalID = setInterval(() => {
+
+      setPlayerProfile(prevProfile => {
+        
+        let efficiencyCreativityRegen = prevProfile.Efficiency * CREATIVITY_REGEN_PER_EFFICIENCY_POINT;
+
+        let regeneratedCreativity = prevProfile.CurrentCreativity + CREATIVITY_REGEN + efficiencyCreativityRegen;
+
+        if(regeneratedCreativity > prevProfile.MaxCreativity)
+        {
+          regeneratedCreativity = prevProfile.MaxCreativity;
+        }
+
+        return{
+          ...prevProfile,
+          CurrentCreativity: regeneratedCreativity
+        };
+      });
+
+    }, CREATIVITY_REGEN_INTERVAL_MS);
+
+    return () => clearInterval(intervalID);
+
+  }, [playerProfile]);
 
   useEffect(() => {
 
@@ -804,6 +955,7 @@ function App() {
       {isStatsScreenVisible && <StatsScreen onClose={() => setStatsScreenVisible(false)} playerProfile={playerProfile} onAllocateStat={allocateStatPoint}/>}
       {isDailyModalVisible && <DailyInputModal onClose={() => setDailyModalVisible(false)} onConfirm={handleAddDailyTask} />}
       {isToDoModalVisible && <ToDoInputModal onClose={() => setToDoModalVisible(false)} onConfirm={handleTodoTask} />}
+      {notification && <Notification message={notification.message} type={notification.type} onDismiss={dismissNotification} />}
 
       
       <Header onStatsClick={() => setStatsScreenVisible(true)} playerProfile={playerProfile} />
@@ -819,6 +971,7 @@ function App() {
         isHidden={isStatusBarHidden}
         onToggleDaily={handleToggleDaily}
         onToggleToDo={handleToggleToDo}
+        showNotification={showNotification}
       />
     </div>
   );
