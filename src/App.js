@@ -5,13 +5,20 @@ import {v4 as uuidv4 } from "uuid";
 const XP_PER_DAILY_TASK = 4;
 const XP_PER_TODO_TASK = 7;
 const MISSED_DAILY_PENALTY = 5;
+const MISSED_DAILY_PENALTY_LEVEL = 1;
+const RESILIENCE_DAMAGE_REDUCTION_PER_POINT = 0.5;
 const CREATIVITY_LOSS_PER_TODO = 5;
 const CREATIVITY_REGEN = 2;
 const CREATIVITY_REGEN_INTERVAL_MS = 60000;
+const CREATIVITY_REGEN_EFFICIENCY_INTERVAL_MS = 1000;
+const CREATIVITY_REGEN_EFFICIENCY_MIN_INTERVAL_MS = 5000;
 const CRIT_PER_PROCESSING_POINT = 0.05;
 const CRIT_XP_MULTIPLIER = 1.5;
 const CREATIVITY_COST_REDUCTION_PER_EFFICIENCY_POINT = 0.2;
-const CREATIVITY_REGEN_PER_EFFICIENCY_POINT = 0.5;
+const HEALTH_REGEN_AMOUNT = 1;
+const HEALTH_REGEN_INTERVAL_MS = 60000;
+const HEALTH_REGEN_EFFICIENCY_INTERVAL_MS = 1000;
+const HEALTH_REGEN_EFFICIENCY_MIN_INTERVAL_MS = 5000;
 
 
 const createInitialProfile = (className) => {
@@ -593,7 +600,7 @@ function App() {
     if (!playerProfile) return;
 
     const currentTime = new Date().getTime();
-    const twentyFourHrsInMs = 24 * 60 * 60 * 1000;
+    const twentyFourHrsInMs = 10 * 1000;
 
 
     const newTask = {
@@ -818,16 +825,6 @@ function App() {
   } 
 
 
-  useEffect(() =>{
-    try{
-      localStorage.setItem("PlayerProfile", JSON.stringify(playerProfile));
-    }
-    catch (error){
-      console.error("Error saving player profile to localStorage");
-    }
-  }, [playerProfile]);
-
-
   useEffect(() => {
 
     if(!playerProfile)
@@ -835,13 +832,20 @@ function App() {
       return;
     }
 
+  
+    const baseInterval = CREATIVITY_REGEN_INTERVAL_MS;
+    const reductionPerPoint = CREATIVITY_REGEN_EFFICIENCY_INTERVAL_MS;
+    const minInterval = CREATIVITY_REGEN_EFFICIENCY_MIN_INTERVAL_MS;
+
+    let effectiveInterval = baseInterval - (playerProfile.Efficiency * reductionPerPoint);
+    let finalInterval = Math.max(minInterval, effectiveInterval);
+
     const intervalID = setInterval(() => {
+
 
       setPlayerProfile(prevProfile => {
         
-        let efficiencyCreativityRegen = prevProfile.Efficiency * CREATIVITY_REGEN_PER_EFFICIENCY_POINT;
-
-        let regeneratedCreativity = prevProfile.CurrentCreativity + CREATIVITY_REGEN + efficiencyCreativityRegen;
+        let regeneratedCreativity = prevProfile.CurrentCreativity + CREATIVITY_REGEN; 
 
         if(regeneratedCreativity > prevProfile.MaxCreativity)
         {
@@ -854,10 +858,47 @@ function App() {
         };
       });
 
-    }, CREATIVITY_REGEN_INTERVAL_MS);
+    }, finalInterval);
 
     return () => clearInterval(intervalID);
 
+  }, [playerProfile]);
+
+
+  useEffect(() => {
+    
+    if(!playerProfile)
+    {
+      return;
+    }
+
+    const baseInterval = HEALTH_REGEN_INTERVAL_MS;
+    const reductionPerPoint = HEALTH_REGEN_EFFICIENCY_INTERVAL_MS;
+    const minInterval = HEALTH_REGEN_EFFICIENCY_MIN_INTERVAL_MS;
+
+    let effectiveInterval = baseInterval - (playerProfile.Efficiency * reductionPerPoint);
+    let finalInterval = Math.max(minInterval, effectiveInterval);
+
+
+    const intervalID = setInterval(() => {
+      
+      setPlayerProfile(prevProfile => {
+        
+        let regeneratedHP = prevProfile.CurrentHealth + HEALTH_REGEN_AMOUNT;
+
+        if(regeneratedHP > prevProfile.MaxHealth)
+        {
+          regeneratedHP = prevProfile.MaxHealth;
+        }
+
+        return{
+          ...prevProfile,
+          CurrentHealth: regeneratedHP
+        };
+      });
+    }, finalInterval);
+
+    return () => clearInterval(intervalID);
   }, [playerProfile]);
 
   useEffect(() => {
@@ -866,8 +907,10 @@ function App() {
     const intervalID = setInterval(() => {
 
       let changesMade = false;
-      let hpLost = 0;
-      let hpReduction = Math.floor(playerProfile.Resilience * 0.5);
+      let totalHPLost = 0;
+
+      const basePenaltyCurrentLevel = MISSED_DAILY_PENALTY + (playerProfile.Level - 1) * MISSED_DAILY_PENALTY_LEVEL;
+      const effectiveBasePenalty = Math.max(MISSED_DAILY_PENALTY, basePenaltyCurrentLevel);
 
       const updatedDailyTasks = playerProfile.Tasks.Dailies.map((task) => {
 
@@ -879,8 +922,11 @@ function App() {
         {
           if(task.completed === false)
           {
-            hpLost += MISSED_DAILY_PENALTY;
-            hpLost += (1 * playerProfile.Level);
+            let taskPenalty = effectiveBasePenalty;
+            let resilienceReduction = Math.floor(playerProfile.Resilience * RESILIENCE_DAMAGE_REDUCTION_PER_POINT);
+            let finalTaskPenalty = Math.max(0, taskPenalty - resilienceReduction);
+            totalHPLost += finalTaskPenalty;
+
             changesMade = true;
           }
           changesMade = true;
@@ -896,7 +942,10 @@ function App() {
         }
         else if(hasExpired)
         {
-          hpLost += MISSED_DAILY_PENALTY
+          let taskPenalty = effectiveBasePenalty;
+          let resilienceReduction = Math.floor(playerProfile.Resilience * RESILIENCE_DAMAGE_REDUCTION_PER_POINT);
+          let finalTaskPenalty = Math.max(0, taskPenalty - resilienceReduction);
+          totalHPLost += finalTaskPenalty;
           changesMade = true;
           return null;
         }
@@ -913,10 +962,9 @@ function App() {
       {
         setPlayerProfile(prevProfile => {
 
-          let newCurrentHP = prevProfile.CurrentHealth - hpLost;
-          newCurrentHP += hpReduction;
+          let newCurrentHP = prevProfile.CurrentHealth - totalHPLost;
 
-          console.log(hpReduction);
+          console.log(totalHPLost);
 
           if(newCurrentHP < 0)
           {
