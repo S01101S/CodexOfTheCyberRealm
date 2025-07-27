@@ -19,7 +19,8 @@ const HEALTH_REGEN_AMOUNT = 1;
 const HEALTH_REGEN_INTERVAL_MS = 60000;
 const HEALTH_REGEN_EFFICIENCY_INTERVAL_MS = 1000;
 const HEALTH_REGEN_EFFICIENCY_MIN_INTERVAL_MS = 5000;
-
+const BYTECOINS_COMPLETING_DAILY = 5;
+const BYTECOINS_COMPLETING_TODO = 10;
 
 const createInitialProfile = (className) => {
   const baseStats = {
@@ -124,7 +125,7 @@ const Notification = ({message, type, onDismiss}) => {
   {
     typeClass = "bg-red-600 border border-red-700";
   }
-  else if(type === "Crit")
+  else if(type === "Crit" || "Coin")
   {
     typeClass = "bg-yellow-600 border border-yellow-700";
   }
@@ -600,7 +601,7 @@ function App() {
     if (!playerProfile) return;
 
     const currentTime = new Date().getTime();
-    const twentyFourHrsInMs = 10 * 1000;
+    const twentyFourHrsInMs = 24 * 60 * 60 * 1000;
 
 
     const newTask = {
@@ -650,14 +651,18 @@ function App() {
 
     const originalDaily = playerProfile.Tasks.Dailies.find(task => task.id === taskID);
     let completedDailyXp = 0;
+    let byteCoinEarned = false;
+    let totalByteCoinsEarned = 0;
 
     if(originalDaily.completed === false)
     {
       completedDailyXp = XP_PER_DAILY_TASK;
+      byteCoinEarned = true;
     }
     else if(originalDaily.completed === true)
     {
       completedDailyXp = -XP_PER_DAILY_TASK;
+      byteCoinEarned = false;
     }
 
 
@@ -681,6 +686,16 @@ function App() {
       let finalXP = completedDailyXp;
       const totalCrit = Math.min(0.5, prevProfile.Processing * CRIT_PER_PROCESSING_POINT)
 
+      if(byteCoinEarned === true)
+      {
+        totalByteCoinsEarned = prevProfile.ByteCoins + BYTECOINS_COMPLETING_DAILY;
+        showNotification("Earned 5 ByteCoins", "Coins", "3000");
+      }
+      else if(byteCoinEarned === false)
+      {
+        totalByteCoinsEarned = prevProfile.ByteCoins - BYTECOINS_COMPLETING_DAILY;
+      }
+
       if(finalXP > 0 && Math.random() < totalCrit)
       {
         finalXP = Math.floor(finalXP * CRIT_XP_MULTIPLIER);
@@ -694,7 +709,7 @@ function App() {
 
       console.log(finalXP);
 
-      let newCurrentXp = Math.floor(playerProfile.CurrentXP + finalXP);
+      let newCurrentXp = Math.floor(prevProfile.CurrentXP + finalXP);
 
       if(newCurrentXp < 0)
       {
@@ -704,6 +719,7 @@ function App() {
       let updatedProfile = {
         ...prevProfile,
         CurrentXP: newCurrentXp,
+        ByteCoins: totalByteCoinsEarned,
         Tasks: {
           ...prevProfile.Tasks,
           Dailies: updatedDaily
@@ -723,6 +739,8 @@ function App() {
     let completedToDoXp = 0;
     let baseCreativityLossPerTodo = CREATIVITY_LOSS_PER_TODO;
     let creativityLoss = 0;
+    let byteCoinEarned = false;
+    let totalByteCoins = 0;
 
     if(playerProfile.Level >= 10)
     {
@@ -743,12 +761,10 @@ function App() {
       }
 
       completedToDoXp += XP_PER_TODO_TASK;
-
+      byteCoinEarned = true;
 
     }
   
-
-
     const updatedToDo = playerProfile.Tasks.todos.map((task, index) =>{
 
 
@@ -768,10 +784,15 @@ function App() {
 
       let finalXP = completedToDoXp;
 
-      creativityLoss = Math.floor(creativityLoss);
-
       let finalCreativity = prevProfile.CurrentCreativity - creativityLoss;
       const totalCrit = Math.min(0.5, prevProfile.Processing * CRIT_PER_PROCESSING_POINT)
+
+
+      if(byteCoinEarned === true)
+      {
+        totalByteCoins = prevProfile.ByteCoins + BYTECOINS_COMPLETING_TODO;
+        showNotification("Earned 10 ByteCoins", "Coins", "3000");
+      }
 
       console.log(creativityLoss);
 
@@ -792,12 +813,13 @@ function App() {
         finalXP += Math.floor(prevProfile.Logic * 0.5);
       }
       
-      let newCurrentXp = playerProfile.CurrentXP + finalXP;
+      let newCurrentXp = prevProfile.CurrentXP + finalXP;
 
       let updatedProfile = {
         ...prevProfile,
         CurrentXP: newCurrentXp,
         CurrentCreativity: finalCreativity,
+        ByteCoins: totalByteCoins,
         Tasks: {
           ...prevProfile.Tasks,
           todos: updatedToDo
@@ -942,10 +964,14 @@ function App() {
         }
         else if(hasExpired)
         {
-          let taskPenalty = effectiveBasePenalty;
-          let resilienceReduction = Math.floor(playerProfile.Resilience * RESILIENCE_DAMAGE_REDUCTION_PER_POINT);
-          let finalTaskPenalty = Math.max(0, taskPenalty - resilienceReduction);
-          totalHPLost += finalTaskPenalty;
+          if(task.completed === false)
+          {
+            let taskPenalty = effectiveBasePenalty;
+            let resilienceReduction = Math.floor(playerProfile.Resilience * RESILIENCE_DAMAGE_REDUCTION_PER_POINT);
+            let finalTaskPenalty = Math.max(0, taskPenalty - resilienceReduction);
+            totalHPLost += finalTaskPenalty;
+          }
+          
           changesMade = true;
           return null;
         }
