@@ -24,18 +24,69 @@ const BYTECOINS_COMPLETING_TODO = 10;
 
 
 const shopItems = [
-  { id: 'hp_pot', name: 'Health Potion', price: 50, description: 'Restores 20 HP' },
-  { id: 'mp_pot', name: 'Creativity Elixir', price: 75, description: 'Restores 30 Creativity' },
-  { id: 'xp_boost', name: 'XP Scroll (Minor)', price: 120, description: 'Grants 50 bonus XP' },
-  { id: 'stat_boost', name: 'Stat Crystal', price: 250, description: 'Grants 1 Unallocated Stat Point' },
-  { id: 'gold_bag', name: 'Bag of Coins', price: 1000, description: 'Grants 500 ByteCoins' },
-  { id: 'hp_pot_large', name: 'Large Health Potion', price: 150, description: 'Restores 50 HP' },
-  { id: 'mp_pot_large', name: 'Large Creativity Elixir', price: 200, description: 'Restores 60 Creativity' },
-  { id: 'xp_boost_major', name: 'XP Scroll (Major)', price: 300, description: 'Grants 150 bonus XP' },
-  { id: 'legendary_item', name: 'Legendary Artifact', price: 5000, description: 'A mysterious and powerful item.' },
-  { id: 'rare_gem', name: 'Rare Gem', price: 750, description: 'Can be sold for a high price.' },
-  { id: 'common_ore', name: 'Common Ore', price: 10, description: 'Basic crafting material.' },
-  { id: 'epic_sword', name: 'Epic Sword', price: 1200, description: 'A sharp blade.' },
+  {
+    id: 'health_potion_small',
+    name: 'Small Health Potion',
+    description: 'Restores 10 Current Health.',
+    price: 50,
+    effect: { type: 'health', amount: 10 }
+  },
+  {
+    id: 'creativity_flask_small',
+    name: 'Small Creativity Flask',
+    description: 'Restores 15 Current Creativity.',
+    price: 75,
+    effect: { type: 'creativity', amount: 15 }
+  },
+  {
+    id: 'xp_boost_minor',
+    name: 'Minor XP Boost',
+    description: 'Instantly grants 20 XP.',
+    price: 100,
+    effect: { type: 'xp', amount: 20 }
+  },
+  {
+    id: 'stat_crystal',
+    name: 'Stat Crystal',
+    description: 'Grants 1 Unallocated Stat Point.',
+    price: 250,
+    effect: { type: 'statPoint', amount: 1 }
+  },
+  {
+    id: 'health_potion_large',
+    name: 'Large Health Potion',
+    description: 'Restores 30 Current Health.',
+    price: 120,
+    effect: { type: 'health', amount: 30 }
+  },
+  {
+    id: 'creativity_flask_large',
+    name: 'Large Creativity Flask',
+    description: 'Restores 40 Current Creativity.',
+    price: 180,
+    effect: { type: 'creativity', amount: 40 }
+  },
+  {
+    id: 'xp_boost_major',
+    name: 'Major XP Boost',
+    description: 'Instantly grants 50 XP.',
+    price: 250,
+    effect: { type: 'xp', amount: 50 }
+  },
+  {
+    id: 'max_health_upgrade',
+    name: 'Health Module',
+    description: 'Permanently increases Max Health by 5.',
+    price: 300,
+    effect: { type: 'maxHealth', amount: 5 }
+  },
+  {
+    id: 'max_creativity_upgrade',
+    name: 'Creativity Core',
+    description: 'Permanently increases Max Creativity by 5.',
+    price: 300,
+    effect: { type: 'maxCreativity', amount: 5 }
+  }
 ];
 
 const createInitialProfile = (className) => {
@@ -135,11 +186,11 @@ const Notification = ({message, type, onDismiss}) => {
   let typeClass = "";
 
 
-  if(type === "Level")
+  if(type === "Level" || "purchaseSuccess")
   {
     typeClass = "bg-green-600 border border-green-700";
   }
-  else if(type === "Error")
+  else if(type === "Error" || "purchaseUnsuccessful")
   {
     typeClass = "bg-red-600 border border-red-700";
   }
@@ -315,7 +366,7 @@ const WipeOverlay = ({ chosenClass, onContinue }) => {
 };
 
 
-const ShopScreen = ({onClose, playerProfile}) => {
+const ShopScreen = ({onClose, onBuyItem, showNotification, playerProfile}) => {
 
   if (!playerProfile) return null;
 
@@ -343,7 +394,7 @@ const ShopScreen = ({onClose, playerProfile}) => {
                   <hr className="border-white/50 ml-[40px] w-[90%]"></hr>
                   <p className="font-gowun-dodum text-m">Description: {item.description}</p>
                   <p className="">{item.price} ByteCoins</p>
-                  <button className={`font-courier border border-white/50 h-[30px] w-[50px] mb-[10px] mt-[10px] text-[20px] ${playerProfile.ByteCoins >= item.price ? 'cursor-pointer hover:text-blue-400 hover:border-blue-400/50' : 'cursor-not-allowed hover:text-red-400 hover:border-red-400/50'}`} disabled={playerProfile.ByteCoins < item.price}>Buy</button>
+                  <button onClick={() => onBuyItem(item, showNotification)} className={`font-courier border border-white/50 h-[30px] w-[50px] mb-[10px] mt-[10px] text-[20px] ${playerProfile.ByteCoins >= item.price ? 'cursor-pointer hover:text-blue-400 hover:border-blue-400/50' : 'cursor-not-allowed hover:text-red-400 hover:border-red-400/50'}`} disabled={playerProfile.ByteCoins < item.price}>Buy</button>
                 </div>
               </div>
             ))}
@@ -933,9 +984,32 @@ function App() {
         UnallocatedStatPoints: prevProfile.UnallocatedStatPoints - 1
       }))
     }
-
-  
   } 
+
+  const handleBuyItem = (itemToBuy, showNotification) => {
+
+    if(!playerProfile) return;
+
+    if(playerProfile.ByteCoins < itemToBuy.price)
+    {
+      showNotification("Not enough ByteCoins", "purchaseUnsuccessful", "3000");
+      return;
+    }
+
+    setPlayerProfile(prevProfile => {
+      
+      const newByteCoins = prevProfile.ByteCoins - itemToBuy.price;
+      const newInventory = [...prevProfile.Inventory, itemToBuy];
+      
+      showNotification("Purchase successful", "purchaseSuccess", "3000");
+
+      return { 
+        ...prevProfile,
+        ByteCoins: newByteCoins,
+        Inventory: newInventory
+      };
+    });
+  };
 
 
   useEffect(() => {
@@ -1121,7 +1195,7 @@ function App() {
       {isDailyModalVisible && <DailyInputModal onClose={() => setDailyModalVisible(false)} onConfirm={handleAddDailyTask} />}
       {isToDoModalVisible && <ToDoInputModal onClose={() => setToDoModalVisible(false)} onConfirm={handleTodoTask} />}
       {notification && <Notification message={notification.message} type={notification.type} onDismiss={dismissNotification} />}
-      {isShopModalVisible && <ShopScreen onClose={() => setShopModalVisisble(false)} playerProfile={playerProfile} />}
+      {isShopModalVisible && <ShopScreen onClose={() => setShopModalVisisble(false)} onBuyItem={handleBuyItem} showNotification={showNotification} playerProfile={playerProfile} />}
       
       <Header onStatsClick={() => setStatsScreenVisible(true)} onShopClick={() => setShopModalVisisble(true)} playerProfile={playerProfile} />
       <CharacterStatus 
