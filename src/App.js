@@ -22,6 +22,22 @@ const HEALTH_REGEN_EFFICIENCY_MIN_INTERVAL_MS = 5000;
 const BYTECOINS_COMPLETING_DAILY = 5;
 const BYTECOINS_COMPLETING_TODO = 10;
 
+
+const shopItems = [
+  { id: 'hp_pot', name: 'Health Potion', price: 50, description: 'Restores 20 HP' },
+  { id: 'mp_pot', name: 'Creativity Elixir', price: 75, description: 'Restores 30 Creativity' },
+  { id: 'xp_boost', name: 'XP Scroll (Minor)', price: 120, description: 'Grants 50 bonus XP' },
+  { id: 'stat_boost', name: 'Stat Crystal', price: 250, description: 'Grants 1 Unallocated Stat Point' },
+  { id: 'gold_bag', name: 'Bag of Coins', price: 1000, description: 'Grants 500 ByteCoins' },
+  { id: 'hp_pot_large', name: 'Large Health Potion', price: 150, description: 'Restores 50 HP' },
+  { id: 'mp_pot_large', name: 'Large Creativity Elixir', price: 200, description: 'Restores 60 Creativity' },
+  { id: 'xp_boost_major', name: 'XP Scroll (Major)', price: 300, description: 'Grants 150 bonus XP' },
+  { id: 'legendary_item', name: 'Legendary Artifact', price: 5000, description: 'A mysterious and powerful item.' },
+  { id: 'rare_gem', name: 'Rare Gem', price: 750, description: 'Can be sold for a high price.' },
+  { id: 'common_ore', name: 'Common Ore', price: 10, description: 'Basic crafting material.' },
+  { id: 'epic_sword', name: 'Epic Sword', price: 1200, description: 'A sharp blade.' },
+];
+
 const createInitialProfile = (className) => {
   const baseStats = {
     ClassName: className,
@@ -183,9 +199,9 @@ const CharacterStatus = ({ playerProfile, isHidden, onToggle }) => {
           <img className="h-[180px] w-full object-cover" src={getSpriteSrc()} alt="Character Sprite" />
         </div>
         <div className="text-white p-2.5">
-          <StatBar title="Health" currentValue={playerProfile.CurrentHealth.toFixed(1)} maxValue={playerProfile.MaxHealth} percentage={healthPercentage} barClass="bg-green-400 shadow-[0_0_8px_2px_rgba(135,206,250,0.7)]" />
-          <StatBar title="Creativity" currentValue={playerProfile.CurrentCreativity.toFixed(1)} maxValue={playerProfile.MaxCreativity} percentage={creativityPercentage} barClass="bg-[#8b27f6] shadow-[0_0_8px_2px_rgb(191,108,236)]" />
-          <StatBar title="XP" currentValue={playerProfile.CurrentXP.toFixed(1)} maxValue={playerProfile.NextLevelXP} percentage={xpPercentage} barClass="bg-cyan-400 shadow-[0_0_8px_2px_rgba(135,206,250,0.7)]" />
+          <StatBar title="Health" currentValue={playerProfile.CurrentHealth.toFixed(0)} maxValue={playerProfile.MaxHealth} percentage={healthPercentage} barClass="bg-green-400 shadow-[0_0_8px_2px_rgba(135,206,250,0.7)]" />
+          <StatBar title="Creativity" currentValue={playerProfile.CurrentCreativity.toFixed(0)} maxValue={playerProfile.MaxCreativity} percentage={creativityPercentage} barClass="bg-[#8b27f6] shadow-[0_0_8px_2px_rgb(191,108,236)]" />
+          <StatBar title="XP" currentValue={playerProfile.CurrentXP.toFixed(0)} maxValue={playerProfile.NextLevelXP} percentage={xpPercentage} barClass="bg-cyan-400 shadow-[0_0_8px_2px_rgba(135,206,250,0.7)]" />
         </div>
       </div>
       <div onClick={onToggle} className="absolute -bottom-10 left-0 w-full h-10 bg-black/50 hover:bg-black/70 text-white flex justify-center items-center cursor-pointer border-t border-[#555] transition-colors z-[1]">
@@ -315,9 +331,51 @@ const ShopScreen = ({onClose, playerProfile}) => {
           <button onClick={onClose} className="text-4xl text-white/70 absolute z-20 top-[8%] right-[24%] bg-transparent border border-white/50 w-[60px] cursor-pointer transition-colors hover:text-blue-400 hover:border-blue-400/50">&times;</button>
           <h1 className="font-gowun-dodum text-white pt-[53px] animate-glow text-3xl">SHOP</h1>
           <hr className="border-white/50 w-4/5 mx-auto my-4 mt-[2px]"/>
-          <div className="bg-transparent border border-white/50 max-h-[500px] h-[450px] mx-auto w-[595px] overflow-y-auto space-y-3">
+          <div className="bg-transparent border border-white/50 max-h-[500px] h-[450px] mx-auto w-[595px] overflow-y-auto space-y-3 custom-shop-scrollBar">
 
+
+
+            {shopItems.map(item => (
+              <div key={item.id} className="flex items-center justify-between bg-transparent backdrop-blur-sm ml-[10px] mt-[5px] mb-[10px] border border-white/20 transition-colors">
+
+                <div className="text-center flex-grow">
+                  <h3 className="m-0 p-0 font-courier text-lg animate-glow">{item.name}</h3>
+                  <hr className="border-white/50 ml-[40px] w-[90%]"></hr>
+                  <p className="font-gowun-dodum text-m">Description: {item.description}</p>
+                  <p className="">{item.price} ByteCoins</p>
+                  <button className={`font-courier border border-white/50 h-[30px] w-[50px] mb-[10px] mt-[10px] text-[20px] ${playerProfile.ByteCoins >= item.price ? 'cursor-pointer hover:text-blue-400 hover:border-blue-400/50' : 'cursor-not-allowed hover:text-red-400 hover:border-red-400/50'}`} disabled={playerProfile.ByteCoins < item.price}>Buy</button>
+                </div>
+              </div>
+            ))}
           </div>
+
+          <style>
+            {`.custom-shop-scrollBar::-webkit-scrollbar{
+                width: 10px;
+                background-color: transparent;
+              }
+                
+              .custome-shop-scrollBar::-webkit-scrollbar-track{
+                background: transparent;
+                border-radius: 5px;
+              }
+                
+              .custom-shop-scrollBar::-webkit-scrollbar-thumb {
+                background-color: blue; 
+                border-radius: 50%;
+                min-height: 20px;
+                border: none;
+              }
+
+              .custom-shop-scrollBar::-webkit-scrollbar-thumb:hover {
+                background-color: lightblue;
+              }
+              
+              .custom-shop-scrollBar {
+                scrollbar-width: thin;
+                scrollbar-color: #8b5cf6 rgba(40, 40, 40, 0); 
+              }`}
+          </style>
 
     </div>
 
@@ -361,14 +419,14 @@ const StatsScreen = ({ onClose, playerProfile, onAllocateStat }) => {
                 <h1 className="font-gowun-dodum text-white pt-[70px] animate-glow text-4xl">STATS</h1>
                 <hr className="border-white/50 w-4/5 mx-auto my-4" />
                 <p className="font-courier text-xl text-white mt-5 animate-glow">Class: {playerProfile.ClassName}</p>
-                <div className="ml-[100px] flex justify-around mb-10 text-white animate-glow items-center">
+                <div className="ml-[100px] flex justify-around mb-10 text-white animate-glow items-centerm">
                     <div className="mt-[50px] text-left">
                         <StatRow label="Level" value={playerProfile.Level} />
-                        <StatRow label="Health"><ProgressBar percentage={(playerProfile.CurrentHealth / playerProfile.MaxHealth) * 100} valueText={`${playerProfile.CurrentHealth.toFixed(1)} / ${playerProfile.MaxHealth}`} /></StatRow>
-                        <StatRow label="Creativity"><ProgressBar percentage={(playerProfile.CurrentCreativity / playerProfile.MaxCreativity) * 100} valueText={`${playerProfile.CurrentCreativity.toFixed(1)} / ${playerProfile.MaxCreativity}`} /></StatRow>
-                        <StatRow label="XP"><ProgressBar percentage={(playerProfile.CurrentXP / playerProfile.NextLevelXP) * 100} valueText={`${playerProfile.CurrentXP.toFixed(1)} / ${playerProfile.NextLevelXP}`} /></StatRow>
+                        <StatRow label="Health"><ProgressBar percentage={(playerProfile.CurrentHealth / playerProfile.MaxHealth) * 100} valueText={`${playerProfile.CurrentHealth.toFixed(0)} / ${playerProfile.MaxHealth}`} /></StatRow>
+                        <StatRow label="Creativity"><ProgressBar percentage={(playerProfile.CurrentCreativity / playerProfile.MaxCreativity) * 100} valueText={`${playerProfile.CurrentCreativity.toFixed(0)} / ${playerProfile.MaxCreativity}`} /></StatRow>
+                        <StatRow label="XP"><ProgressBar percentage={(playerProfile.CurrentXP / playerProfile.NextLevelXP) * 100} valueText={`${playerProfile.CurrentXP.toFixed(0)} / ${playerProfile.NextLevelXP}`} /></StatRow>
                     </div>
-                    <div className="mt-[20px] mr-[150px] space-y-[39px]">
+                    <div className="mt-[50px] mr-[150px] space-y-[39px]">
                         <StatRow label="Processing" value={playerProfile.Processing} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Processing"/>
                         <StatRow label="Resilience" value={playerProfile.Resilience} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Resilience"/>
                         <StatRow label="Efficiency" value={playerProfile.Efficiency} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Efficiency"/>
