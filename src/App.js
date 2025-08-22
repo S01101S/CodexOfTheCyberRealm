@@ -4,6 +4,90 @@ import {v4 as uuidv4 } from "uuid";
 
 const XP_PER_DAILY_TASK = 4;
 const XP_PER_TODO_TASK = 7;
+const MISSED_DAILY_PENALTY = 5;
+const MISSED_DAILY_PENALTY_LEVEL = 1;
+const RESILIENCE_DAMAGE_REDUCTION_PER_POINT = 0.5;
+const CREATIVITY_LOSS_PER_TODO = 5;
+const CREATIVITY_REGEN = 2;
+const CREATIVITY_REGEN_INTERVAL_MS = 60000;
+const CREATIVITY_REGEN_EFFICIENCY_INTERVAL_MS = 1000;
+const CREATIVITY_REGEN_EFFICIENCY_MIN_INTERVAL_MS = 5000;
+const CRIT_PER_PROCESSING_POINT = 0.05;
+const CRIT_XP_MULTIPLIER = 1.5;
+const CREATIVITY_COST_REDUCTION_PER_EFFICIENCY_POINT = 0.2;
+const HEALTH_REGEN_AMOUNT = 1;
+const HEALTH_REGEN_INTERVAL_MS = 60000;
+const HEALTH_REGEN_EFFICIENCY_INTERVAL_MS = 1000;
+const HEALTH_REGEN_EFFICIENCY_MIN_INTERVAL_MS = 5000;
+const BYTECOINS_COMPLETING_DAILY = 5;
+const BYTECOINS_COMPLETING_TODO = 10;
+
+
+const shopItems = [
+  {
+    id: 'health_potion_small',
+    name: 'Small Health Potion',
+    description: 'Restores 10 Current Health.',
+    price: 50,
+    effect: { type: 'health', amount: 10 }
+  },
+  {
+    id: 'creativity_flask_small',
+    name: 'Small Creativity Flask',
+    description: 'Restores 15 Current Creativity.',
+    price: 75,
+    effect: { type: 'creativity', amount: 15 }
+  },
+  {
+    id: 'xp_boost_small',
+    name: 'Small XP Boost',
+    description: 'Instantly grants 20 XP.',
+    price: 100,
+    effect: { type: 'xp', amount: 20 }
+  },
+  {
+    id: 'stat_crystal',
+    name: 'Stat Crystal',
+    description: 'Grants 1 Unallocated Stat Point.',
+    price: 250,
+    effect: { type: 'statPoint', amount: 1 }
+  },
+  {
+    id: 'health_potion_large',
+    name: 'Large Health Potion',
+    description: 'Restores 30 Current Health.',
+    price: 120,
+    effect: { type: 'health', amount: 30 }
+  },
+  {
+    id: 'creativity_flask_large',
+    name: 'Large Creativity Flask',
+    description: 'Restores 40 Current Creativity.',
+    price: 180,
+    effect: { type: 'creativity', amount: 40 }
+  },
+  {
+    id: 'xp_boost_large',
+    name: 'Large XP Boost',
+    description: 'Instantly grants 50 XP.',
+    price: 250,
+    effect: { type: 'xp', amount: 50 }
+  },
+  {
+    id: 'max_health_upgrade',
+    name: 'Health Module',
+    description: 'Permanently increases Max Health by 5.',
+    price: 300,
+    effect: { type: 'maxHealth', amount: 5 }
+  },
+  {
+    id: 'max_creativity_upgrade',
+    name: 'Creativity Core',
+    description: 'Permanently increases Max Creativity by 5.',
+    price: 300,
+    effect: { type: 'maxCreativity', amount: 5 }
+  }
+];
 
 const createInitialProfile = (className) => {
   const baseStats = {
@@ -50,33 +134,104 @@ const createInitialProfile = (className) => {
 };
 
 
-const Header = ({ onStatsClick }) => (
-  <header className="flex items-center justify-end bg-header-bg text-white relative z-10 p-2.5 h-[50px]">
-    <img className="h-[50px] mr-2.5" src="/images/logo.png" alt="Logo" />
-    <h1 className="font-gowun-dodum text-white mr-auto mt-2.5 ml-2.5 text-[30px]">Codex</h1>
-    
-    {['Skill_Tree', 'Inventory'].map(text => (
-      <button key={text} className="bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
-        {text}
+const Header = ({ onStatsClick, onShopClick, onInventoryClick, onSettingsClick, playerProfile }) => {
+
+  const pointsToAllocate = playerProfile ? playerProfile.UnallocatedStatPoints > 0 : false;
+
+  return (
+    <header className="flex items-center justify-end bg-header-bg relative z-10 p-2.5 h-[50px]">
+      <img className="h-[50px] mr-2.5" src="/images/logo.png" alt="Logo" />
+      <h1 className="font-gowun-dodum text-white mr-auto mt-2.5 ml-2.5 text-[30px]">Codex</h1>
+      
+      {playerProfile && (
+        <span className="bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">ByteCoins: {playerProfile.ByteCoins}</span>
+      )}
+      
+      {['Skill_Tree'].map(text => (
+        <button key={text} className="bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
+          {text}
+        </button>
+      ))}
+      <button onClick={onInventoryClick} className={"bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5"}>Inventory</button>
+      <button onClick={onShopClick} className={"bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5"}>Shop</button>
+      <button onClick={onStatsClick} className={`bg-transparent border-0 font-gowun-dodum transition-opacity duration-300 p-2.5 ${pointsToAllocate ? `animate-pulse-custom`: `text-white opacity-50 hover:opacity-100`}`}>
+        Stats
       </button>
-    ))}
-    <button onClick={onStatsClick} className="bg-transparent border-0 font-gowun-dodum text-white opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
-      Stats
-    </button>
-    <button className="bg-transparent border-0 opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
-      <img className="h-[40px]" src="/images/settingsIcon.png" alt="Settings" />
-    </button>
-  </header>
-);
+      <button onClick={onSettingsClick} className="bg-transparent border-0 opacity-50 hover:opacity-100 transition-opacity duration-300 p-2.5">
+        <img className="h-[40px]" src="/images/settingsIcon.png" alt="Settings" />
+      </button>
+
+      <style>
+        {`
+        @keyframes pulse-custom { 
+          0%, 100% {
+            color: #8B5CF6; 
+            opacity-100;
+          }
+          50% {
+            color: #3B82F6; 
+            opacity-100;
+          }
+        } 
+
+        .animate-pulse-custom { 
+          animation: pulse-custom 1.5s infinite alternate; 
+        }
+        `}
+      </style>
+    </header>
+  );
+};
+
+
+const Notification = ({message, type, onDismiss}) => {
+
+  const baseClasses = "fixed top-5 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-lg text-white z-50 transition-all duration-500 ease-out transform";
+  let typeClass = "";
+
+
+  if(type === "Level" || type === "purchaseSuccess")
+  {
+    typeClass = "bg-green-600 border border-green-700";
+  }
+  else if(type === "Error" || type === "purchaseUnsuccessful")
+  {
+    typeClass = "bg-red-600 border border-red-700";
+  }
+  else if(type === "Crit" || type === "Coins")
+  {
+    typeClass = "bg-yellow-600 border border-yellow-700";
+  }
+  else if(type === "itemUsed")
+  {
+    typeClass = "bg-purple-600 border border-purple-700";
+  }
+
+
+  return (
+    <div className={`${baseClasses} ${typeClass}`}>
+      <div className="flex items-center justify-between">
+        <span className="font-bold text-lg">{message}</span>
+        <button onClick={onDismiss} className="ml-4 text-white hover:text-gray-400 text-xl leading-none">
+          &times;
+        </button>
+      </div>
+    </div>
+  )
+};
+
+
+
 
 const CharacterStatus = ({ playerProfile, isHidden, onToggle }) => {
-  if (!playerProfile) return null;
+
+  if (!playerProfile) return null; 
 
   const healthPercentage = (playerProfile.CurrentHealth / playerProfile.MaxHealth) * 100;
   const creativityPercentage = (playerProfile.CurrentCreativity / playerProfile.MaxCreativity) * 100;
   const xpPercentage = (playerProfile.CurrentXP / playerProfile.NextLevelXP) * 100;
 
-  const StatBar = ({ title, currentValue, maxValue, percentage, barClass }) => (
+  const StatBar = ({ title, currentValue, maxValue, percentage, barClass,  }) => (
     <>
       <p className="font-courier m-0 p-0 mb-1 mt-1">{title}</p>
       <div className="flex items-center gap-2.5">
@@ -103,13 +258,13 @@ const CharacterStatus = ({ playerProfile, isHidden, onToggle }) => {
           <img className="h-[180px] w-full object-cover" src={getSpriteSrc()} alt="Character Sprite" />
         </div>
         <div className="text-white p-2.5">
-          <StatBar title="Health" currentValue={playerProfile.CurrentHealth} maxValue={playerProfile.MaxHealth} percentage={healthPercentage} barClass="bg-green-400 shadow-[0_0_8px_2px_rgba(135,206,250,0.7)]" />
-          <StatBar title="Creativity" currentValue={playerProfile.CurrentCreativity} maxValue={playerProfile.MaxCreativity} percentage={creativityPercentage} barClass="bg-[#8b27f6] shadow-[0_0_8px_2px_rgb(191,108,236)]" />
-          <StatBar title="XP" currentValue={playerProfile.CurrentXP} maxValue={playerProfile.NextLevelXP} percentage={xpPercentage} barClass="bg-cyan-400 shadow-[0_0_8px_2px_rgba(135,206,250,0.7)]" />
+          <StatBar title="Health" currentValue={playerProfile.CurrentHealth.toFixed(0)} maxValue={playerProfile.MaxHealth} percentage={healthPercentage} barClass="bg-green-400 shadow-[0_0_8px_2px_rgba(135,206,250,0.7)]" />
+          <StatBar title="Creativity" currentValue={playerProfile.CurrentCreativity.toFixed(0)} maxValue={playerProfile.MaxCreativity} percentage={creativityPercentage} barClass="bg-[#8b27f6] shadow-[0_0_8px_2px_rgb(191,108,236)]" />
+          <StatBar title="XP" currentValue={playerProfile.CurrentXP.toFixed(0)} maxValue={playerProfile.NextLevelXP} percentage={xpPercentage} barClass="bg-cyan-400 shadow-[0_0_8px_2px_rgba(135,206,250,0.7)]" />
         </div>
       </div>
       <div onClick={onToggle} className="absolute -bottom-10 left-0 w-full h-10 bg-black/50 hover:bg-black/70 text-white flex justify-center items-center cursor-pointer border-t border-[#555] transition-colors z-[1]">
-        <span>{isHidden ? 'Show Stats' : 'Hide Stats'}</span>
+        <span>{isHidden ? 'Show_Stats' : 'Hide_Stats'}</span>
         <i className={`border-solid border-white border-b-2 border-r-2 inline-block p-1 ml-2.5 transition-transform duration-400 ${isHidden ? 'rotate-45' : '-rotate-[135deg]'}`}></i>
       </div>
     </div>
@@ -218,6 +373,201 @@ const WipeOverlay = ({ chosenClass, onContinue }) => {
   );
 };
 
+
+const ShopScreen = ({onClose, onBuyItem, showNotification, playerProfile}) => {
+
+  if (!playerProfile) return null;
+
+
+  return (
+    <div className="fixed top-[2%] left-0 w-full h-[100%] z-20 flex flex-col justify-between items-center pointer-events-auto">
+      <header className="h-[10%] w-[60%] bg-gradient-to-r from-purple-700 via-purple-500 to-purple-700 flex-shrink-0" style={{ clipPath: 'polygon(50% 0%, 100% 0, 100% 53%, 73% 53%, 58% 100%, 39% 100%, 24% 53%, 0 53%, 0 0)' }}></header>
+      <div className="m-0 mt-[-50px] mb-[-50px] p-0 pt-[-10px] w-[55%] h-full text-center flex flex-col bg-stats-bg animate-move-circuits" style={{ 
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 304 304' width='304' height='304'%3E%3Cpath fill='%236200ff' fill-opacity='0.54' opacity='0.2' d='M44.1 224a5 5 0 1 1 0 2H0v-2h44.1zm160 48a5 5 0 1 1 0 2H82v-2h122.1zm57.8-46a5 5 0 1 1 0-2H304v2h-42.1zm0 16a5 5 0 1 1 0-2H304v2h-42.1zm6.2-114a5 5 0 1 1 0 2h-86.2a5 5 0 1 1 0-2h86.2zm-256-48a5 5 0 1 1 0 2H0v-2h12.1zm185.8 34a5 5 0 1 1 0-2h86.2a5 5 0 1 1 0 2h-86.2zM258 12.1a5 5 0 1 1-2 0V0h2v12.1zm-64 208a5 5 0 1 1-2 0v-54.2a5 5 0 1 1 2 0v54.2zm48-198.2V80h62v2h-64V21.9a5 5 0 1 1 2 0zm16 16V64h46v2h-48V37.9a5 5 0 1 1 2 0zm-128 96V208h16v12.1a5 5 0 1 1-2 0V210h-16v-76.1a5 5 0 1 1 2 0zm-5.9-21.9a5 5 0 1 1 0 2H114v48H85.9a5 5 0 1 1 0-2H112v-48h12.1zm-6.2 130a5 5 0 1 1 0-2H176v-74.1a5 5 0 1 1 2 0V242h-60.1zm-16-64a5 5 0 1 1 0-2H114v48h10.1a5 5 0 1 1 0 2H112v-48h-10.1zM66 284.1a5 5 0 1 1-2 0V274H50v30h-2v-32h18v12.1zM236.1 176a5 5 0 1 1 0 2H226v94h48v32h-2v-30h-48v-98h12.1zm25.8-30a5 5 0 1 1 0-2H274v44.1a5 5 0 1 1-2 0V146h-10.1zm-64 96a5 5 0 1 1 0-2H208v-80h16v-14h-42.1a5 5 0 1 1 0-2H226v18h-16v80h-12.1zm86.2-210a5 5 0 1 1 0 2H272V0h2v32h10.1zM98 101.9V146H53.9a5 5 0 1 1 0-2H96v-42.1a5 5 0 1 1 2 0zM53.9 34a5 5 0 1 1 0-2H80V0h2v34H53.9zm60.1 3.9V66H82v64H69.9a5 5 0 1 1 0-2H80V64h32V37.9a5 5 0 1 1 2 0zM101.9 82a5 5 0 1 1 0-2H128V37.9a5 5 0 1 1 2 0V82h-28.1zm16-64a5 5 0 1 1 0-2H146v44.1a5 5 0 1 1-2 0V18h-26.1zm102.2 270a5 5 0 1 1 0 2H98v14h-2v-16h124.1zM242 149.9V160h16v34h-16v62h48v48h-2v-46h-48v-66h16v-30h-16v-12.1a5 5 0 1 1 2 0zM53.9 18a5 5 0 1 1 0-2H64V2H48V0h18v18H53.9zm112 32a5 5 0 1 1 0-2H192V0h50v2h-48v48h-28.1zm-48-48a5 5 0 0 1-9.8-2h2.07a3 3 0 1 0 5.66 0H178v34h-18V21.9a5 5 0 1 1 2 0V32h14V2h-58.1zm0 96a5 5 0 1 1 0-2H137l32-32h39V21.9a5 5 0 1 1 2 0V66h-40.17l-32 32H117.9zm28.1 90.1a5 5 0 1 1-2 0v-76.51L175.59 80H224V21.9a5 5 0 1 1 2 0V82h-49.59L146 112.41v75.69zm16 32a5 5 0 1 1-2 0v-99.51L184.59 96H300.1a5 5 0 0 1 3.9-3.9v2.07a3 3 0 0 0 0 5.66v2.07a5 5 0 0 1-3.9-3.9H185.41L162 121.41v98.69zm-144-64a5 5 0 1 1-2 0v-3.51l48-48V48h32V0h2v50H66v55.41l-48 48v2.69zM50 53.9v43.51l-48 48V208h26.1a5 5 0 1 1 0 2H0v-65.41l48-48V53.9a5 5 0 1 1 2 0zm-16 16V89.41l-34 34v-2.82l32-32V69.9a5 5 0 1 1 2 0zM12.1 32a5 5 0 1 1 0 2H9.41L0 43.41V40.6L8.59 32h3.51zm265.8 18a5 5 0 1 1 0-2h18.69l7.41-7.41v2.82L297.41 50H277.9zm-16 160a5 5 0 1 1 0-2H288v-71.41l16-16v2.82l-14 14V210h-28.1zm-208 32a5 5 0 1 1 0-2H64v-22.59L40.59 194H21.9a5 5 0 1 1 0-2H41.41L66 216.59V242H53.9zm150.2 14a5 5 0 1 1 0 2H96v-56.6L56.6 162H37.9a5 5 0 1 1 0-2h19.5L98 200.6V256h106.1zm-150.2 2a5 5 0 1 1 0-2H80v-46.59L48.59 178H21.9a5 5 0 1 1 0-2H49.41L82 208.59V258H53.9zM34 39.8v1.61L9.41 66H0v-2h8.59L32 40.59V0h2v39.8zM2 300.1a5 5 0 0 1 3.9 3.9H3.83A3 3 0 0 0 0 302.17V256h18v48h-2v-46H2v42.1zM34 241v63h-2v-62H0v-2h34v1zM17 18H0v-2h16V0h2v18h-1zm273-2h14v2h-16V0h2v16zm-32 273v15h-2v-14h-14v14h-2v-16h18v1zM0 92.1A5.02 5.02 0 0 1 6 97a5 5 0 0 1-6 4.9v-2.07a3 3 0 1 0 0-5.66V92.1zM80 272h2v32h-2v-32zm37.9 32h-2.07a3 3 0 0 0-5.66 0h-2.07a5 5 0 0 1 9.8 0zM5.9 0A5.02 5.02 0 0 1 0 5.9V3.83A3 3 0 0 0 3.83 0H5.9zm294.2 0h2.07A3 3 0 0 0 304 3.83V5.9a5 5 0 0 1-3.9-5.9zm3.9 300.1v2.07a3 3 0 0 0-1.83 1.83h-2.07a5 5 0 0 1 3.9-3.9zM97 100a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-48 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 96a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-144a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM49 36a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM33 68a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 240a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm80-176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm112 176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 180a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 84a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'%3E%3C/path%3E%3C/svg%3E")`, 
+        backgroundColor: 'rgb(50,5,87)' }}>
+
+          <button onClick={onClose} className="text-4xl text-white/70 absolute z-20 top-[8%] right-[24%] bg-transparent border border-white/50 w-[60px] cursor-pointer transition-colors hover:text-blue-400 hover:border-blue-400/50">&times;</button>
+          <h1 className="font-gowun-dodum text-white pt-[53px] animate-glow text-3xl">SHOP</h1>
+          <hr className="border-white/50 w-4/5 mx-auto my-4 mt-[2px]"/>
+          <div className="bg-transparent border border-white/50 max-h-[500px] h-[450px] mx-auto w-[595px] overflow-y-auto space-y-3 custom-shop-scrollBar">
+
+
+
+            {shopItems.map(item => (
+              <div key={item.id} className="flex items-center justify-between bg-transparent backdrop-blur-sm ml-[10px] mt-[5px] mb-[10px] border border-white/20 transition-colors">
+
+                <div className="text-center flex-grow">
+                  <h3 className="m-0 p-0 font-courier text-lg animate-glow">{item.name}</h3>
+                  <hr className="border-white/50 ml-[40px] w-[90%]"></hr>
+                  <p className="font-gowun-dodum text-m">Description: {item.description}</p>
+                  <p className="">{item.price} ByteCoins</p>
+                  <button onClick={() => onBuyItem(item, showNotification)} className={`font-courier border border-white/50 h-[30px] w-[50px] mb-[10px] mt-[10px] text-[20px] ${playerProfile.ByteCoins >= item.price ? 'cursor-pointer hover:text-blue-400 hover:border-blue-400/50' : 'cursor-not-allowed hover:text-red-400 hover:border-red-400/50'}`} disabled={playerProfile.ByteCoins < item.price}>Buy</button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <style>
+            {`.custom-shop-scrollBar::-webkit-scrollbar{
+                width: 10px;
+                background-color: transparent;
+              }
+                
+              .custome-shop-scrollBar::-webkit-scrollbar-track{
+                background: transparent;
+                border-radius: 5px;
+              }
+                
+              .custom-shop-scrollBar::-webkit-scrollbar-thumb {
+                background-color: blue; 
+                border-radius: 50%;
+                min-height: 20px;
+                border: none;
+              }
+
+              .custom-shop-scrollBar::-webkit-scrollbar-thumb:hover {
+                background-color: lightblue;
+              }
+              
+              .custom-shop-scrollBar {
+                scrollbar-width: thin;
+                scrollbar-color: #8b5cf6 rgba(40, 40, 40, 0); 
+              }`}
+          </style>
+
+    </div>
+
+      <footer className="h-[10%] w-[60%] mb-[30px] bg-gradient-to-r from-purple-700 via-purple-500 to-purple-700 flex-shrink-0" style={{ clipPath: 'polygon(0% 47%, 24% 47%, 39% 0%, 58% 0%, 73% 47%, 100% 47%, 100% 100%, 0% 100%)' }}></footer>
+
+    </div>
+  )
+
+}
+
+
+const InventoryScreen = ({onClose, onUseItem, showNotification, playerProfile}) => {
+
+  if(!playerProfile) return null;
+
+  console.log("Inventory screen");
+
+  return (
+    <div className="fixed top-[2%] left-0 w-full h-[90%] z-20 flex flex-col justify-between items-center pointer-events-auto">
+      <header className="h-[10%] w-[80%] bg-gradient-to-r from-purple-700 via-purple-500 to-purple-700 flex-shrink-0" style={{ clipPath: 'polygon(50% 0%, 100% 0, 100% 53%, 73% 53%, 58% 100%, 39% 100%, 24% 53%, 0 53%, 0 0)' }}></header>
+      <div className="m-0 p-0 -mt-24 -mb-24 w-[75%] h-[600px] text-center flex flex-col bg-stats-bg animate-move-circuits" style={{ 
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 304 304' width='304' height='304'%3E%3Cpath fill='%236200ff' fill-opacity='0.54' opacity='0.2' d='M44.1 224a5 5 0 1 1 0 2H0v-2h44.1zm160 48a5 5 0 1 1 0 2H82v-2h122.1zm57.8-46a5 5 0 1 1 0-2H304v2h-42.1zm0 16a5 5 0 1 1 0-2H304v2h-42.1zm6.2-114a5 5 0 1 1 0 2h-86.2a5 5 0 1 1 0-2h86.2zm-256-48a5 5 0 1 1 0 2H0v-2h12.1zm185.8 34a5 5 0 1 1 0-2h86.2a5 5 0 1 1 0 2h-86.2zM258 12.1a5 5 0 1 1-2 0V0h2v12.1zm-64 208a5 5 0 1 1-2 0v-54.2a5 5 0 1 1 2 0v54.2zm48-198.2V80h62v2h-64V21.9a5 5 0 1 1 2 0zm16 16V64h46v2h-48V37.9a5 5 0 1 1 2 0zm-128 96V208h16v12.1a5 5 0 1 1-2 0V210h-16v-76.1a5 5 0 1 1 2 0zm-5.9-21.9a5 5 0 1 1 0 2H114v48H85.9a5 5 0 1 1 0-2H112v-48h12.1zm-6.2 130a5 5 0 1 1 0-2H176v-74.1a5 5 0 1 1 2 0V242h-60.1zm-16-64a5 5 0 1 1 0-2H114v48h10.1a5 5 0 1 1 0 2H112v-48h-10.1zM66 284.1a5 5 0 1 1-2 0V274H50v30h-2v-32h18v12.1zM236.1 176a5 5 0 1 1 0 2H226v94h48v32h-2v-30h-48v-98h12.1zm25.8-30a5 5 0 1 1 0-2H274v44.1a5 5 0 1 1-2 0V146h-10.1zm-64 96a5 5 0 1 1 0-2H208v-80h16v-14h-42.1a5 5 0 1 1 0-2H226v18h-16v80h-12.1zm86.2-210a5 5 0 1 1 0 2H272V0h2v32h10.1zM98 101.9V146H53.9a5 5 0 1 1 0-2H96v-42.1a5 5 0 1 1 2 0zM53.9 34a5 5 0 1 1 0-2H80V0h2v34H53.9zm60.1 3.9V66H82v64H69.9a5 5 0 1 1 0-2H80V64h32V37.9a5 5 0 1 1 2 0zM101.9 82a5 5 0 1 1 0-2H128V37.9a5 5 0 1 1 2 0V82h-28.1zm16-64a5 5 0 1 1 0-2H146v44.1a5 5 0 1 1-2 0V18h-26.1zm102.2 270a5 5 0 1 1 0 2H98v14h-2v-16h124.1zM242 149.9V160h16v34h-16v62h48v48h-2v-46h-48v-66h16v-30h-16v-12.1a5 5 0 1 1 2 0zM53.9 18a5 5 0 1 1 0-2H64V2H48V0h18v18H53.9zm112 32a5 5 0 1 1 0-2H192V0h50v2h-48v48h-28.1zm-48-48a5 5 0 0 1-9.8-2h2.07a3 3 0 1 0 5.66 0H178v34h-18V21.9a5 5 0 1 1 2 0V32h14V2h-58.1zm0 96a5 5 0 1 1 0-2H137l32-32h39V21.9a5 5 0 1 1 2 0V66h-40.17l-32 32H117.9zm28.1 90.1a5 5 0 1 1-2 0v-76.51L175.59 80H224V21.9a5 5 0 1 1 2 0V82h-49.59L146 112.41v75.69zm16 32a5 5 0 1 1-2 0v-99.51L184.59 96H300.1a5 5 0 0 1 3.9-3.9v2.07a3 3 0 0 0 0 5.66v2.07a5 5 0 0 1-3.9-3.9H185.41L162 121.41v98.69zm-144-64a5 5 0 1 1-2 0v-3.51l48-48V48h32V0h2v50H66v55.41l-48 48v2.69zM50 53.9v43.51l-48 48V208h26.1a5 5 0 1 1 0 2H0v-65.41l48-48V53.9a5 5 0 1 1 2 0zm-16 16V89.41l-34 34v-2.82l32-32V69.9a5 5 0 1 1 2 0zM12.1 32a5 5 0 1 1 0 2H9.41L0 43.41V40.6L8.59 32h3.51zm265.8 18a5 5 0 1 1 0-2h18.69l7.41-7.41v2.82L297.41 50H277.9zm-16 160a5 5 0 1 1 0-2H288v-71.41l16-16v2.82l-14 14V210h-28.1zm-208 32a5 5 0 1 1 0-2H64v-22.59L40.59 194H21.9a5 5 0 1 1 0-2H41.41L66 216.59V242H53.9zm150.2 14a5 5 0 1 1 0 2H96v-56.6L56.6 162H37.9a5 5 0 1 1 0-2h19.5L98 200.6V256h106.1zm-150.2 2a5 5 0 1 1 0-2H80v-46.59L48.59 178H21.9a5 5 0 1 1 0-2H49.41L82 208.59V258H53.9zM34 39.8v1.61L9.41 66H0v-2h8.59L32 40.59V0h2v39.8zM2 300.1a5 5 0 0 1 3.9 3.9H3.83A3 3 0 0 0 0 302.17V256h18v48h-2v-46H2v42.1zM34 241v63h-2v-62H0v-2h34v1zM17 18H0v-2h16V0h2v18h-1zm273-2h14v2h-16V0h2v16zm-32 273v15h-2v-14h-14v14h-2v-16h18v1zM0 92.1A5.02 5.02 0 0 1 6 97a5 5 0 0 1-6 4.9v-2.07a3 3 0 1 0 0-5.66V92.1zM80 272h2v32h-2v-32zm37.9 32h-2.07a3 3 0 0 0-5.66 0h-2.07a5 5 0 0 1 9.8 0zM5.9 0A5.02 5.02 0 0 1 0 5.9V3.83A3 3 0 0 0 3.83 0H5.9zm294.2 0h2.07A3 3 0 0 0 304 3.83V5.9a5 5 0 0 1-3.9-5.9zm3.9 300.1v2.07a3 3 0 0 0-1.83 1.83h-2.07a5 5 0 0 1 3.9-3.9zM97 100a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-48 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 96a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-144a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM49 36a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM33 68a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 240a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm80-176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm112 176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 180a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 84a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'%3E%3C/path%3E%3C/svg%3E")`, 
+        backgroundColor: 'rgb(50,5,87)' }}>
+          <button onClick={onClose} className="text-4xl text-white/70 absolute z-20 top-[10%] right-[16.3%] bg-transparent border border-white/50 w-[60px] cursor-pointer transition-colors hover:text-blue-400 hover:border-blue-400/50">&times;</button>
+          <h1 className="font-gowun-dodum text-white pt-[70px] animate-glow text-3xl">INVENTORY</h1>
+          <hr className="border-white/50 w-[90%] mx-auto"></hr>
+
+          <div className="bg-transparent max-h-[500px] h-[450px] mx-auto w-full overflow-y-auto p-4 custom-shop-scrollbar flex flex-wrap gap-5 ml-[70px] custom-inventory-scrollBar">
+
+            {playerProfile.Inventory.map(item => (
+              
+              <div key={item.instanceID} className="flex flex-col items-center justify-start flex-shrink-0 bg-transparent backdrop-blur-sm p-3 rounded-md border border-gray-500 w-[150px] h-[150px]">
+                <div className="text-center flex-grow m-0 p-0"> 
+                  <h3 className="font-semibold text-lg">{item.name}</h3>
+                  <p className="text-sm text-gray-300">{item.description}</p>
+                  <button onClick={() => onUseItem(item, showNotification)}className="border border-white/50 bg-transparent w-[50px] mt-[5px] hover:text-blue-400 hover:border-blue-400/50">USE</button>
+                </div>
+              </div>  
+
+
+            ))}
+
+          </div>
+
+          <style>
+            {`.custom-inventory-scrollBar::-webkit-scrollbar{
+                display: none;
+                height: 0;
+                width: 0;
+              }
+              
+              .custom-inventory-scrollBar::-webkit-scrollbar-thump{
+                background-color:: transparent;
+                border-radius: 50%;
+                min-height: 20px;
+                border: none;
+              }
+              
+              .custome-inventory-scrollBar::-webkit-scrollbar-thump:hover{
+                background-color: transparent;
+              }
+              
+              .custom-inventory-scrollBar{
+                scrollbar-width: none;}`}
+          </style>
+
+      </div>
+
+      <footer className="h-[10%] w-[80%] bg-gradient-to-r from-purple-700 via-purple-500 to-purple-700 flex-shrink-0" style={{ clipPath: 'polygon(0% 47%, 24% 47%, 39% 0%, 58% 0%, 73% 47%, 100% 47%, 100% 100%, 0% 100%)' }}></footer>
+
+    </div>
+  )
+
+}
+
+
+const SettingsScreen = ({onClose, onDeleteButton, playerProfile}) => {
+
+  if(!playerProfile) return null;
+
+  return (
+    <div className="fixed top-[2%] left-0 w-full h-[90%] z-20 flex flex-col justify-between items-center pointer-events-auto">
+      <header className="h-[10%] w-[40%] bg-gradient-to-r from-purple-700 via-purple-500 to-purple-700 flex-shrink-0 mt-[60px]" style={{ clipPath: 'polygon(50% 0%, 100% 0, 100% 53%, 73% 53%, 58% 100%, 39% 100%, 24% 53%, 0 53%, 0 0)' }}></header>
+
+        <div className="m-0 p-0 -mt-24 -mb-24 w-[35%] h-[450px] text-center flex flex-col bg-stats-bg animate-move-circuits" style={{ 
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 304 304' width='304' height='304'%3E%3Cpath fill='%236200ff' fill-opacity='0.54' opacity='0.2' d='M44.1 224a5 5 0 1 1 0 2H0v-2h44.1zm160 48a5 5 0 1 1 0 2H82v-2h122.1zm57.8-46a5 5 0 1 1 0-2H304v2h-42.1zm0 16a5 5 0 1 1 0-2H304v2h-42.1zm6.2-114a5 5 0 1 1 0 2h-86.2a5 5 0 1 1 0-2h86.2zm-256-48a5 5 0 1 1 0 2H0v-2h12.1zm185.8 34a5 5 0 1 1 0-2h86.2a5 5 0 1 1 0 2h-86.2zM258 12.1a5 5 0 1 1-2 0V0h2v12.1zm-64 208a5 5 0 1 1-2 0v-54.2a5 5 0 1 1 2 0v54.2zm48-198.2V80h62v2h-64V21.9a5 5 0 1 1 2 0zm16 16V64h46v2h-48V37.9a5 5 0 1 1 2 0zm-128 96V208h16v12.1a5 5 0 1 1-2 0V210h-16v-76.1a5 5 0 1 1 2 0zm-5.9-21.9a5 5 0 1 1 0 2H114v48H85.9a5 5 0 1 1 0-2H112v-48h12.1zm-6.2 130a5 5 0 1 1 0-2H176v-74.1a5 5 0 1 1 2 0V242h-60.1zm-16-64a5 5 0 1 1 0-2H114v48h10.1a5 5 0 1 1 0 2H112v-48h-10.1zM66 284.1a5 5 0 1 1-2 0V274H50v30h-2v-32h18v12.1zM236.1 176a5 5 0 1 1 0 2H226v94h48v32h-2v-30h-48v-98h12.1zm25.8-30a5 5 0 1 1 0-2H274v44.1a5 5 0 1 1-2 0V146h-10.1zm-64 96a5 5 0 1 1 0-2H208v-80h16v-14h-42.1a5 5 0 1 1 0-2H226v18h-16v80h-12.1zm86.2-210a5 5 0 1 1 0 2H272V0h2v32h10.1zM98 101.9V146H53.9a5 5 0 1 1 0-2H96v-42.1a5 5 0 1 1 2 0zM53.9 34a5 5 0 1 1 0-2H80V0h2v34H53.9zm60.1 3.9V66H82v64H69.9a5 5 0 1 1 0-2H80V64h32V37.9a5 5 0 1 1 2 0zM101.9 82a5 5 0 1 1 0-2H128V37.9a5 5 0 1 1 2 0V82h-28.1zm16-64a5 5 0 1 1 0-2H146v44.1a5 5 0 1 1-2 0V18h-26.1zm102.2 270a5 5 0 1 1 0 2H98v14h-2v-16h124.1zM242 149.9V160h16v34h-16v62h48v48h-2v-46h-48v-66h16v-30h-16v-12.1a5 5 0 1 1 2 0zM53.9 18a5 5 0 1 1 0-2H64V2H48V0h18v18H53.9zm112 32a5 5 0 1 1 0-2H192V0h50v2h-48v48h-28.1zm-48-48a5 5 0 0 1-9.8-2h2.07a3 3 0 1 0 5.66 0H178v34h-18V21.9a5 5 0 1 1 2 0V32h14V2h-58.1zm0 96a5 5 0 1 1 0-2H137l32-32h39V21.9a5 5 0 1 1 2 0V66h-40.17l-32 32H117.9zm28.1 90.1a5 5 0 1 1-2 0v-76.51L175.59 80H224V21.9a5 5 0 1 1 2 0V82h-49.59L146 112.41v75.69zm16 32a5 5 0 1 1-2 0v-99.51L184.59 96H300.1a5 5 0 0 1 3.9-3.9v2.07a3 3 0 0 0 0 5.66v2.07a5 5 0 0 1-3.9-3.9H185.41L162 121.41v98.69zm-144-64a5 5 0 1 1-2 0v-3.51l48-48V48h32V0h2v50H66v55.41l-48 48v2.69zM50 53.9v43.51l-48 48V208h26.1a5 5 0 1 1 0 2H0v-65.41l48-48V53.9a5 5 0 1 1 2 0zm-16 16V89.41l-34 34v-2.82l32-32V69.9a5 5 0 1 1 2 0zM12.1 32a5 5 0 1 1 0 2H9.41L0 43.41V40.6L8.59 32h3.51zm265.8 18a5 5 0 1 1 0-2h18.69l7.41-7.41v2.82L297.41 50H277.9zm-16 160a5 5 0 1 1 0-2H288v-71.41l16-16v2.82l-14 14V210h-28.1zm-208 32a5 5 0 1 1 0-2H64v-22.59L40.59 194H21.9a5 5 0 1 1 0-2H41.41L66 216.59V242H53.9zm150.2 14a5 5 0 1 1 0 2H96v-56.6L56.6 162H37.9a5 5 0 1 1 0-2h19.5L98 200.6V256h106.1zm-150.2 2a5 5 0 1 1 0-2H80v-46.59L48.59 178H21.9a5 5 0 1 1 0-2H49.41L82 208.59V258H53.9zM34 39.8v1.61L9.41 66H0v-2h8.59L32 40.59V0h2v39.8zM2 300.1a5 5 0 0 1 3.9 3.9H3.83A3 3 0 0 0 0 302.17V256h18v48h-2v-46H2v42.1zM34 241v63h-2v-62H0v-2h34v1zM17 18H0v-2h16V0h2v18h-1zm273-2h14v2h-16V0h2v16zm-32 273v15h-2v-14h-14v14h-2v-16h18v1zM0 92.1A5.02 5.02 0 0 1 6 97a5 5 0 0 1-6 4.9v-2.07a3 3 0 1 0 0-5.66V92.1zM80 272h2v32h-2v-32zm37.9 32h-2.07a3 3 0 0 0-5.66 0h-2.07a5 5 0 0 1 9.8 0zM5.9 0A5.02 5.02 0 0 1 0 5.9V3.83A3 3 0 0 0 3.83 0H5.9zm294.2 0h2.07A3 3 0 0 0 304 3.83V5.9a5 5 0 0 1-3.9-5.9zm3.9 300.1v2.07a3 3 0 0 0-1.83 1.83h-2.07a5 5 0 0 1 3.9-3.9zM97 100a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-48 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 96a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-144a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM49 36a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM33 68a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 240a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm80-176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm112 176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 180a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 84a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'%3E%3C/path%3E%3C/svg%3E")`, 
+          backgroundColor: 'rgb(50,5,87)' }}>
+
+            <button onClick={onClose} className="text-4xl text-white/70 absolute z-20 top-[20%] right-[34.3%] bg-transparent border border-white/50 w-[60px] cursor-pointer transition-colors hover:text-blue-400 hover:border-blue-400/50">&times;</button>
+            <h1 className="font-gowun-dodum text-white pt-[70px] animate-glow text-3xl">SETTINGS</h1>
+            <hr className="border-white/50 w-[90%] mx-auto"></hr>
+
+            <button onClick={onDeleteButton} className="mx-auto w-[190px] h-[50px]  mt-[30px] border border-white/50 hover:text-red-400 hover:border-red-400/50 text-[20px]">DELETE ACCOUNT</button>
+
+
+
+        </div>
+
+      <footer className="h-[10%] w-[40%] bg-gradient-to-r from-purple-700 via-purple-500 to-purple-700 flex-shrink-0 mb-[90px]" style={{ clipPath: 'polygon(0% 47%, 24% 47%, 39% 0%, 58% 0%, 73% 47%, 100% 47%, 100% 100%, 0% 100%)' }}></footer>
+
+    </div>
+  )
+}
+
+
+const DeleteConfirmModal = ({onConfirm, onCancel}) => {
+  
+  console.log("delete modal");
+
+  return (
+    <div className="fixed top-[2%] left-0 w-full h-[90%] z-20 flex flex-col justify-between items-center pointer-events-auto">
+
+      <header className="h-[10%] w-[30%] bg-gradient-to-r from-red-700 via-red-500 to-red-700 flex-shrink-0 mt-[100px]" style={{ clipPath: 'polygon(50% 0%, 100% 0, 100% 53%, 73% 53%, 58% 100%, 39% 100%, 24% 53%, 0 53%, 0 0)' }}></header>
+
+      <div className="m-0 p-0 -mt-24 -mb-24 w-[25%] h-[300px] text-center flex flex-col bg-stats-bg animate-move-circuits" style={{ 
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 304 304' width='304' height='304'%3E%3Cpath fill='%236200ff' fill-opacity='0.54' opacity='0.2' d='M44.1 224a5 5 0 1 1 0 2H0v-2h44.1zm160 48a5 5 0 1 1 0 2H82v-2h122.1zm57.8-46a5 5 0 1 1 0-2H304v2h-42.1zm0 16a5 5 0 1 1 0-2H304v2h-42.1zm6.2-114a5 5 0 1 1 0 2h-86.2a5 5 0 1 1 0-2h86.2zm-256-48a5 5 0 1 1 0 2H0v-2h12.1zm185.8 34a5 5 0 1 1 0-2h86.2a5 5 0 1 1 0 2h-86.2zM258 12.1a5 5 0 1 1-2 0V0h2v12.1zm-64 208a5 5 0 1 1-2 0v-54.2a5 5 0 1 1 2 0v54.2zm48-198.2V80h62v2h-64V21.9a5 5 0 1 1 2 0zm16 16V64h46v2h-48V37.9a5 5 0 1 1 2 0zm-128 96V208h16v12.1a5 5 0 1 1-2 0V210h-16v-76.1a5 5 0 1 1 2 0zm-5.9-21.9a5 5 0 1 1 0 2H114v48H85.9a5 5 0 1 1 0-2H112v-48h12.1zm-6.2 130a5 5 0 1 1 0-2H176v-74.1a5 5 0 1 1 2 0V242h-60.1zm-16-64a5 5 0 1 1 0-2H114v48h10.1a5 5 0 1 1 0 2H112v-48h-10.1zM66 284.1a5 5 0 1 1-2 0V274H50v30h-2v-32h18v12.1zM236.1 176a5 5 0 1 1 0 2H226v94h48v32h-2v-30h-48v-98h12.1zm25.8-30a5 5 0 1 1 0-2H274v44.1a5 5 0 1 1-2 0V146h-10.1zm-64 96a5 5 0 1 1 0-2H208v-80h16v-14h-42.1a5 5 0 1 1 0-2H226v18h-16v80h-12.1zm86.2-210a5 5 0 1 1 0 2H272V0h2v32h10.1zM98 101.9V146H53.9a5 5 0 1 1 0-2H96v-42.1a5 5 0 1 1 2 0zM53.9 34a5 5 0 1 1 0-2H80V0h2v34H53.9zm60.1 3.9V66H82v64H69.9a5 5 0 1 1 0-2H80V64h32V37.9a5 5 0 1 1 2 0zM101.9 82a5 5 0 1 1 0-2H128V37.9a5 5 0 1 1 2 0V82h-28.1zm16-64a5 5 0 1 1 0-2H146v44.1a5 5 0 1 1-2 0V18h-26.1zm102.2 270a5 5 0 1 1 0 2H98v14h-2v-16h124.1zM242 149.9V160h16v34h-16v62h48v48h-2v-46h-48v-66h16v-30h-16v-12.1a5 5 0 1 1 2 0zM53.9 18a5 5 0 1 1 0-2H64V2H48V0h18v18H53.9zm112 32a5 5 0 1 1 0-2H192V0h50v2h-48v48h-28.1zm-48-48a5 5 0 0 1-9.8-2h2.07a3 3 0 1 0 5.66 0H178v34h-18V21.9a5 5 0 1 1 2 0V32h14V2h-58.1zm0 96a5 5 0 1 1 0-2H137l32-32h39V21.9a5 5 0 1 1 2 0V66h-40.17l-32 32H117.9zm28.1 90.1a5 5 0 1 1-2 0v-76.51L175.59 80H224V21.9a5 5 0 1 1 2 0V82h-49.59L146 112.41v75.69zm16 32a5 5 0 1 1-2 0v-99.51L184.59 96H300.1a5 5 0 0 1 3.9-3.9v2.07a3 3 0 0 0 0 5.66v2.07a5 5 0 0 1-3.9-3.9H185.41L162 121.41v98.69zm-144-64a5 5 0 1 1-2 0v-3.51l48-48V48h32V0h2v50H66v55.41l-48 48v2.69zM50 53.9v43.51l-48 48V208h26.1a5 5 0 1 1 0 2H0v-65.41l48-48V53.9a5 5 0 1 1 2 0zm-16 16V89.41l-34 34v-2.82l32-32V69.9a5 5 0 1 1 2 0zM12.1 32a5 5 0 1 1 0 2H9.41L0 43.41V40.6L8.59 32h3.51zm265.8 18a5 5 0 1 1 0-2h18.69l7.41-7.41v2.82L297.41 50H277.9zm-16 160a5 5 0 1 1 0-2H288v-71.41l16-16v2.82l-14 14V210h-28.1zm-208 32a5 5 0 1 1 0-2H64v-22.59L40.59 194H21.9a5 5 0 1 1 0-2H41.41L66 216.59V242H53.9zm150.2 14a5 5 0 1 1 0 2H96v-56.6L56.6 162H37.9a5 5 0 1 1 0-2h19.5L98 200.6V256h106.1zm-150.2 2a5 5 0 1 1 0-2H80v-46.59L48.59 178H21.9a5 5 0 1 1 0-2H49.41L82 208.59V258H53.9zM34 39.8v1.61L9.41 66H0v-2h8.59L32 40.59V0h2v39.8zM2 300.1a5 5 0 0 1 3.9 3.9H3.83A3 3 0 0 0 0 302.17V256h18v48h-2v-46H2v42.1zM34 241v63h-2v-62H0v-2h34v1zM17 18H0v-2h16V0h2v18h-1zm273-2h14v2h-16V0h2v16zm-32 273v15h-2v-14h-14v14h-2v-16h18v1zM0 92.1A5.02 5.02 0 0 1 6 97a5 5 0 0 1-6 4.9v-2.07a3 3 0 1 0 0-5.66V92.1zM80 272h2v32h-2v-32zm37.9 32h-2.07a3 3 0 0 0-5.66 0h-2.07a5 5 0 0 1 9.8 0zM5.9 0A5.02 5.02 0 0 1 0 5.9V3.83A3 3 0 0 0 3.83 0H5.9zm294.2 0h2.07A3 3 0 0 0 304 3.83V5.9a5 5 0 0 1-3.9-5.9zm3.9 300.1v2.07a3 3 0 0 0-1.83 1.83h-2.07a5 5 0 0 1 3.9-3.9zM97 100a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-48 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 96a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-144a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM49 36a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM33 68a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 240a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm80-176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm112 176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 180a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 84a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'%3E%3C/path%3E%3C/svg%3E")`, 
+          backgroundColor: 'rgba(104, 5, 5, 1)' }}>
+
+          <h1 className="font-gowun-dodum text-white pt-[50px] animate-glow text-[20px]">STOP BEING A PLAYER?</h1>
+          <hr className="border-white/50 w-[90%] mx-auto"></hr>
+
+          <button onClick={onConfirm} className="mx-auto w-[190px] h-[50px]  mt-[30px] border border-white/50 hover:text-red-400 hover:border-red-400/50 text-[20px]">YES</button>
+          <button onClick={onCancel} className="mx-auto w-[190px] h-[50px]  mt-[30px] border border-white/50 hover:text-red-400 hover:border-red-400/50 text-[20px]">NO</button>
+
+
+
+      </div>
+
+      <footer className="h-[10%] w-[30%] bg-gradient-to-r from-red-700 via-red-500 to-red-700 flex-shrink-0 mb-[150px]" style={{ clipPath: 'polygon(0% 47%, 24% 47%, 39% 0%, 58% 0%, 73% 47%, 100% 47%, 100% 100%, 0% 100%)' }}></footer>
+    </div>
+
+  )
+}
+
 const StatsScreen = ({ onClose, playerProfile, onAllocateStat }) => {
     if (!playerProfile) return null;
 
@@ -251,14 +601,14 @@ const StatsScreen = ({ onClose, playerProfile, onAllocateStat }) => {
                 <h1 className="font-gowun-dodum text-white pt-[70px] animate-glow text-4xl">STATS</h1>
                 <hr className="border-white/50 w-4/5 mx-auto my-4" />
                 <p className="font-courier text-xl text-white mt-5 animate-glow">Class: {playerProfile.ClassName}</p>
-                <div className="ml-[100px] flex justify-around mb-10 text-white animate-glow items-center">
+                <div className="ml-[100px] flex justify-around mb-10 text-white animate-glow items-centerm">
                     <div className="mt-[50px] text-left">
                         <StatRow label="Level" value={playerProfile.Level} />
-                        <StatRow label="Health"><ProgressBar percentage={(playerProfile.CurrentHealth / playerProfile.MaxHealth) * 100} valueText={`${playerProfile.CurrentHealth} / ${playerProfile.MaxHealth}`} /></StatRow>
-                        <StatRow label="Creativity"><ProgressBar percentage={(playerProfile.CurrentCreativity / playerProfile.MaxCreativity) * 100} valueText={`${playerProfile.CurrentCreativity} / ${playerProfile.MaxCreativity}`} /></StatRow>
-                        <StatRow label="XP"><ProgressBar percentage={(playerProfile.CurrentXP / playerProfile.NextLevelXP) * 100} valueText={`${playerProfile.CurrentXP} / ${playerProfile.NextLevelXP}`} /></StatRow>
+                        <StatRow label="Health"><ProgressBar percentage={(playerProfile.CurrentHealth / playerProfile.MaxHealth) * 100} valueText={`${playerProfile.CurrentHealth.toFixed(0)} / ${playerProfile.MaxHealth}`} /></StatRow>
+                        <StatRow label="Creativity"><ProgressBar percentage={(playerProfile.CurrentCreativity / playerProfile.MaxCreativity) * 100} valueText={`${playerProfile.CurrentCreativity.toFixed(0)} / ${playerProfile.MaxCreativity}`} /></StatRow>
+                        <StatRow label="XP"><ProgressBar percentage={(playerProfile.CurrentXP / playerProfile.NextLevelXP) * 100} valueText={`${playerProfile.CurrentXP.toFixed(0)} / ${playerProfile.NextLevelXP}`} /></StatRow>
                     </div>
-                    <div className="mt-[20px] mr-[150px] space-y-[39px]">
+                    <div className="mt-[50px] mr-[150px] space-y-[39px]">
                         <StatRow label="Processing" value={playerProfile.Processing} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Processing"/>
                         <StatRow label="Resilience" value={playerProfile.Resilience} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Resilience"/>
                         <StatRow label="Efficiency" value={playerProfile.Efficiency} canAllocate={pointsToAllocate} onAllocate={onAllocateStat} statName="Efficiency"/>
@@ -272,30 +622,37 @@ const StatsScreen = ({ onClose, playerProfile, onAllocateStat }) => {
     );
 };
 
-const TaskManagement = ({ onAddDailyClick, onToDoClick, tasks, isHidden, onToggleDaily, onToggleToDo }) => {
-    const TaskColumn = ({ title, onAddClick, taskList, onToggleItem }) => (
-        <div className={`mt-10 transition-transform duration-400 ease-in-out ${isHidden ? '-translate-y-2/5' : 'translate-y-0'}`}>
-            <div className="flex items-center relative w-[300px] ml-[50px] bg-[rgba(186,186,186,0.5)]">
-                <header className="font-courier text-white text-center text-xl flex-grow">
-                    {title}
-                </header>
-                <button onClick={onAddClick} className="absolute top-1/2 -translate-y-1/2 right-2.5 z-10 text-xl rounded-full w-5 h-5 flex items-center justify-center bg-gray-200 text-black">+</button>
+const TaskManagement = ({ onAddDailyClick, onToDoClick, tasks, isHidden, onToggleDaily, onToggleToDo, showNotification }) => {
+    const TaskColumn = ({ title, onAddClick, taskList, onToggleItem, showNotificationForColumn }) => {
+        const isDailyColumn = title === "Dailies";
+        const isToDoColumn = title === "To-Do";
+        const filteredTaskList = isToDoColumn ? taskList.filter(task => !task.completed) : taskList;
+
+        return (
+            <div className={`mt-10 transition-transform duration-400 ease-in-out ${isHidden ? '-translate-y-2/5' : 'translate-y-0'}`}>
+                <div className="flex items-center relative w-[300px] ml-[50px] bg-[rgba(186,186,186,0.5)]">
+                    <header className="font-courier text-white text-center text-xl flex-grow">
+                        {title}
+                    </header>
+                    <button onClick={onAddClick} className="absolute top-1/2 -translate-y-1/2 right-2.5 z-10 text-xl rounded-full w-5 h-5 flex items-center justify-center bg-gray-200 text-black">+</button>
+                </div>
+                <ul className="m-0 p-0 border border-white/50 w-[300px] ml-[50px] min-h-[350px] bg-white/50">
+                    {filteredTaskList.map((task) => (
+                        <li
+                            key={task.id}
+                            className={`list-none border p-3 font-courier flex items-center overflow-wrap break-all transition-all duration-300 ease-in-out ${isDailyColumn && task.completed ? 'bg-gray-700 border-gray-800 text-gray-400 line-through' : 'bg-purple-600 border-purple-800 text-white'}`}>
+                            <input type="checkbox" checked={task.completed} onChange={() => onToggleItem(task.id, showNotificationForColumn)} className=" appearance-none w-6 h-6 shrink-0 border border-white bg-transparent rounded-sm cursor-pointer relative mr-2 checked:bg-purple-500 checked:border-white checked:after:content-[''] checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 checked:after:w-2 checked:after:h-4 checked:after:border-white checked:after:border-b-2 checked:after:border-r-2 checked:after:rotate-45"/>
+                            <span className="flex-grow min-w-0">{task.text}</span>
+                        </li>
+                    ))}
+                </ul>
             </div>
-            <ul className="m-0 p-0 border border-white/50 w-[300px] ml-[50px] min-h-[350px] bg-white/50">
-                {taskList
-                  .filter(task => !task.completed)
-                  .map((task, index) => (
-                    <li key={task.id} className={`list-none border border-purple-800 p-3 font-courier text-white bg-purple-600 flex items-center overflow-wrap: word-break: break-all ${task.completed ? 'bg-green-500' : 'bg-purple-600'}`}>
-                      <input type="checkbox" checked={task.completed} onChange={() => onToggleItem(task.id)} className="appearance-none w-6 h-6 shrink-0 border border-white bg-white bg-transparent rounded-sm cursor-pointer relative mr-2 checked:bg-purple-500 checked:border-white checked:after:content-[''] checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 checked:after:w-2 checked:after:h-4 checked:after:border-white checked:after:border-b-2 checked:after:border-r-2 checked:after:rotate-45"/>
-                      {task.text}</li>
-                ))}
-            </ul>
-        </div>
-    );
+        );
+    };
     return (
         <div className={`flex space-x-8 transition-transform ${isHidden ? '-translate-y-[200px]' : ''}`}>
-            <TaskColumn title="Dailies" onAddClick={onAddDailyClick} taskList={tasks?.Dailies || []} onToggleItem={onToggleDaily}/>
-            <TaskColumn title="To-Do" onAddClick={onToDoClick} taskList={tasks?.todos || []} onToggleItem={onToggleToDo} />
+            <TaskColumn title="Dailies" onAddClick={onAddDailyClick} taskList={tasks?.Dailies || []} onToggleItem={onToggleDaily} showNotificationForColumn={showNotification}/>
+            <TaskColumn title="To-Do" onAddClick={onToDoClick} taskList={tasks?.todos || []} onToggleItem={onToggleToDo} showNotificationForColumn={showNotification} />
         </div>
     );
 };
@@ -399,7 +756,11 @@ function App() {
   const [isDailyModalVisible, setDailyModalVisible] = useState(false);
   const [isToDoModalVisible, setToDoModalVisible] = useState(false);
   const [showWipe, setShowWipe] = useState(false);
-
+  const [notification, setNotification] = useState(null);
+  const [isShopModalVisible, setShopModalVisisble] = useState(false);
+  const [isInventoryVisible, setInventoryVisible] = useState(false);
+  const [isSettingsVisivle, setSettingsVisible] = useState(false);
+  const [isDeleteVisible, setDeleteVisible] = useState(false);
 
   // Save profile to localStorage whenever it changes
   useEffect(() => {
@@ -419,7 +780,43 @@ function App() {
   };
 
 
-  const checkLevelUp = (updatedProfile) => {
+  const showNotification = (message, type = 'level', duration = 3000) => {
+    setNotification({message, type});
+
+    if (window._notificationTimer)
+    { 
+    clearTimeout(window._notificationTimer);
+    }
+
+    const timer = setTimeout(() => {
+      setNotification(null);
+    }, duration);
+    
+    window._notificationTimer = timer;
+    
+  }
+
+  const dismissNotification = () => {
+    setNotification(null);
+  };
+
+  const handleDeleteAccount = () => {
+    setDeleteVisible(true);
+  };
+
+  const handleOnCancelDelete = () => {
+    setDeleteVisible(false);
+  };
+
+  const handleOnConfirmDelete = () => {
+    localStorage.removeItem("PlayerProfile");
+    setPlayerProfile(null);
+    setSettingsVisible(false);
+    setDeleteVisible(false);
+    showNotification("Account deleted", "Error", "3000");
+  };
+
+  const checkLevelUp = (updatedProfile, showNotification) => {
     
     let currentProfile = {...updatedProfile};
 
@@ -477,6 +874,8 @@ function App() {
         currentProfile.CurrentCreativity += 4;
         currentProfile.MaxCreativity += 4;
       }
+
+      showNotification(`Congratulations! You reached level ${currentProfile.Level}!`, 'Level', 4000);
 
       console.log("You leveled Up");
     }
@@ -536,16 +935,25 @@ function App() {
   }
 
 
-  const handleToggleDaily = (taskID) => {
+  const handleToggleDaily = (taskID, showNotification) => {
 
 
     const originalDaily = playerProfile.Tasks.Dailies.find(task => task.id === taskID);
     let completedDailyXp = 0;
+    let byteCoinEarned = false;
+    let totalByteCoinsEarned = 0;
 
     if(originalDaily.completed === false)
     {
       completedDailyXp = XP_PER_DAILY_TASK;
+      byteCoinEarned = true;
     }
+    else if(originalDaily.completed === true)
+    {
+      completedDailyXp = -XP_PER_DAILY_TASK;
+      byteCoinEarned = false;
+    }
+
 
     const updatedDaily = playerProfile.Tasks.Dailies.map((task, index) => {
 
@@ -564,34 +972,88 @@ function App() {
 
     setPlayerProfile(prevProfile => {
       
-      const newCurrentXp = playerProfile.CurrentXP + completedDailyXp;
+      let finalXP = completedDailyXp;
+      const totalCrit = Math.min(0.5, prevProfile.Processing * CRIT_PER_PROCESSING_POINT)
+
+      if(byteCoinEarned === true)
+      {
+        totalByteCoinsEarned = prevProfile.ByteCoins + BYTECOINS_COMPLETING_DAILY;
+        showNotification("Earned 5 ByteCoins", "Coins", "3000");
+      }
+      else if(byteCoinEarned === false)
+      {
+        totalByteCoinsEarned = prevProfile.ByteCoins - BYTECOINS_COMPLETING_DAILY;
+      }
+
+      if(finalXP > 0 && Math.random() < totalCrit)
+      {
+        finalXP = Math.floor(finalXP * CRIT_XP_MULTIPLIER);
+        showNotification("CRITICAL SUCCESS! Bonus XP", "Crit", "3000");
+      }
+
+      if(finalXP > 0)
+      {
+        finalXP += Math.floor(prevProfile.Logic * 0.5);
+      }
+
+      console.log(finalXP);
+
+      let newCurrentXp = Math.floor(prevProfile.CurrentXP + finalXP);
+
+      if(newCurrentXp < 0)
+      {
+        newCurrentXp = 0;
+      }
 
       let updatedProfile = {
         ...prevProfile,
         CurrentXP: newCurrentXp,
+        ByteCoins: totalByteCoinsEarned,
         Tasks: {
           ...prevProfile.Tasks,
           Dailies: updatedDaily
         }
       }
 
-      updatedProfile = checkLevelUp(updatedProfile);
+      updatedProfile = checkLevelUp(updatedProfile, showNotification);
 
       return updatedProfile;
 
     });
   };
 
-  const handleToggleToDo = (taskID) => {
+  const handleToggleToDo = (taskID, showNotification) => {
       
     const originalToDo = playerProfile.Tasks.todos.find(task => task.id === taskID);
     let completedToDoXp = 0;
+    let baseCreativityLossPerTodo = CREATIVITY_LOSS_PER_TODO;
+    let creativityLoss = 0;
+    let byteCoinEarned = false;
+    let totalByteCoins = 0;
+
+    if(playerProfile.Level >= 10)
+    {
+      baseCreativityLossPerTodo = 12;
+    }
+
 
     if(originalToDo.completed === false)
     {
-      completedToDoXp += XP_PER_TODO_TASK;
-    }
+      let efficiencyCreativityLoss = playerProfile.Efficiency * CREATIVITY_COST_REDUCTION_PER_EFFICIENCY_POINT;
+      let reuctionCreativityAmount = baseCreativityLossPerTodo - efficiencyCreativityLoss;
+      creativityLoss = Math.max(1, reuctionCreativityAmount);
 
+      if(playerProfile.CurrentCreativity < creativityLoss)
+      {
+        showNotification("Not enough creativity", "Error", 3000);
+        return;
+      }
+
+      completedToDoXp += XP_PER_TODO_TASK;
+      byteCoinEarned = true;
+
+    }
+  
     const updatedToDo = playerProfile.Tasks.todos.map((task, index) =>{
 
 
@@ -608,19 +1070,52 @@ function App() {
 
 
     setPlayerProfile(prevProfile => {
+
+      let finalXP = completedToDoXp;
+
+      let finalCreativity = prevProfile.CurrentCreativity - creativityLoss;
+      const totalCrit = Math.min(0.5, prevProfile.Processing * CRIT_PER_PROCESSING_POINT)
+
+
+      if(byteCoinEarned === true)
+      {
+        totalByteCoins = prevProfile.ByteCoins + BYTECOINS_COMPLETING_TODO;
+        showNotification("Earned 10 ByteCoins", "Coins", "3000");
+      }
+
+      console.log(creativityLoss);
+
+      if(finalXP > 0 && Math.random() < totalCrit)
+      {
+        finalXP = finalXP * CRIT_XP_MULTIPLIER;
+        showNotification("CRITICAL SUCCESS! Bonus XP", "Crit", "3000");
+      }
+
+      if(finalCreativity < 0)
+      {
+        finalCreativity = 0;
+      }
+
+
+      if(finalXP > 0)
+      {
+        finalXP += Math.floor(prevProfile.Logic * 0.5);
+      }
       
-      const newCurrentXp = playerProfile.CurrentXP + completedToDoXp;
+      let newCurrentXp = prevProfile.CurrentXP + finalXP;
 
       let updatedProfile = {
         ...prevProfile,
         CurrentXP: newCurrentXp,
+        CurrentCreativity: finalCreativity,
+        ByteCoins: totalByteCoins,
         Tasks: {
           ...prevProfile.Tasks,
           todos: updatedToDo
         }
       }
 
-      updatedProfile = checkLevelUp(updatedProfile);
+      updatedProfile = checkLevelUp(updatedProfile, showNotification);
 
       return updatedProfile
     });
@@ -636,26 +1131,208 @@ function App() {
         UnallocatedStatPoints: prevProfile.UnallocatedStatPoints - 1
       }))
     }
-
-  
   } 
 
+  const handleBuyItem = (itemToBuy, showNotification) => {
 
-  useEffect(() =>{
-    try{
-      localStorage.setItem("PlayerProfile", JSON.stringify(playerProfile));
+    if(!playerProfile) return;
+
+    if(playerProfile.ByteCoins < itemToBuy.price)
+    {
+      showNotification("Not enough ByteCoins", "purchaseUnsuccessful", "3000");
+      return;
     }
-    catch (error){
-      console.error("Error saving player profile to localStorage");
+
+    setPlayerProfile(prevProfile => {
+      
+      const newByteCoins = prevProfile.ByteCoins - itemToBuy.price;
+      
+      const newItemToBuy = {...itemToBuy, instanceID: uuidv4()}
+      const newInventory = [...prevProfile.Inventory, newItemToBuy];
+      
+      showNotification("Purchase successful", "purchaseSuccess", "3000");
+
+      return { 
+        ...prevProfile,
+        ByteCoins: newByteCoins,
+        Inventory: newInventory
+      };
+    });
+  };
+
+  const handleUseItem = (itemToUse, showNotification) => {
+
+    if(!playerProfile) return;
+
+    const newInventory = playerProfile.Inventory.filter(item => item.instanceID !== itemToUse.instanceID);
+
+    if(itemToUse.effect.type === "health" && playerProfile.CurrentHealth === playerProfile.MaxHealth)
+    {
+      showNotification("Health at max", "Error", "3000");
+      return;
     }
-  }, [playerProfile]);
+
+    if(itemToUse.effect.type === "creativity" && playerProfile.CurrentCreativity === playerProfile.MaxCreativity)
+    {
+      showNotification("Creativity at max", "Error", "3000");
+      return;
+    }
+
+    setPlayerProfile(prevProfile => {
+
+      let updatedProfile = {...prevProfile};
+
+      if(itemToUse.effect.type === "health")
+      {
+        let newHealth = updatedProfile.CurrentHealth + itemToUse.effect.amount;
+        if(newHealth > updatedProfile.MaxHealth)
+        {
+          newHealth = updatedProfile.MaxHealth;
+        }
+
+        updatedProfile.CurrentHealth = newHealth;
+        showNotification(`Used ${itemToUse.name}! Restored ${itemToUse.effect.amount} health`, "itemUsed", "3000");        
+      }
+
+      else if(itemToUse.effect.type === "creativity")
+      {
+        let newCreativity = updatedProfile.CurrentCreativity + itemToUse.effect.amount;
+        if(newCreativity > updatedProfile.MaxCreativity)
+        {
+          newCreativity = updatedProfile.MaxCreativity;
+        }
+
+        updatedProfile.CurrentCreativity = newCreativity;
+        showNotification(`Used ${itemToUse.name}! Restored ${itemToUse.effect.amount} creativity`, "itemUsed", "3000");
+      }
+
+      else if(itemToUse.effect.type === "xp")
+      {
+        updatedProfile.CurrentXP += itemToUse.effect.amount;
+        showNotification(`Used ${itemToUse.name}! Gained ${itemToUse.effect.amount} XP`, "itemUsed", "3000");
+      }
+
+      else if(itemToUse.effect.type === "statPoint")
+      {
+        updatedProfile.UnallocatedStatPoints += itemToUse.effect.amount;
+        showNotification(`Used ${itemToUse.name}! Gained ${itemToUse.effect.amount} Stat Points`, "itemUsed", "3000");
+        
+      }
+
+      else if(itemToUse.effect.type === "maxHealth")
+      {
+        updatedProfile.MaxHealth += itemToUse.effect.amount;
+        updatedProfile.CurrentHealth += itemToUse.effect.amount;
+        showNotification(`Used ${itemToUse.name}! Gained ${itemToUse.effect.amount} extra health`, "itemUsed", "3000");
+      }
+
+      else if(itemToUse.effect.type === "maxCreativity")
+      {
+        updatedProfile.MaxCreativity += itemToUse.effect.amount;
+        updatedProfile.CurrentCreativity += itemToUse.effect.amount;
+        showNotification(`Used ${itemToUse.name}! Gained ${itemToUse.effect.amount} extra creativity`, "itemUsed", "3000");
+      }
+
+
+      updatedProfile.Inventory = newInventory;
+
+      updatedProfile = checkLevelUp(updatedProfile, showNotification);
+
+      return updatedProfile;
+    });
+
+  };  
 
 
   useEffect(() => {
 
+    if(!playerProfile)
+    {
+      return;
+    }
+
+  
+    const baseInterval = CREATIVITY_REGEN_INTERVAL_MS;
+    const reductionPerPoint = CREATIVITY_REGEN_EFFICIENCY_INTERVAL_MS;
+    const minInterval = CREATIVITY_REGEN_EFFICIENCY_MIN_INTERVAL_MS;
+
+    let effectiveInterval = baseInterval - (playerProfile.Efficiency * reductionPerPoint);
+    let finalInterval = Math.max(minInterval, effectiveInterval);
+
+
+    const intervalID = setInterval(() => {
+
+      setPlayerProfile(prevProfile => {
+        
+        let regeneratedCreativity = prevProfile.CurrentCreativity + CREATIVITY_REGEN; 
+
+        if(regeneratedCreativity > prevProfile.MaxCreativity)
+        {
+          regeneratedCreativity = prevProfile.MaxCreativity;
+        }
+
+        return{
+          ...prevProfile,
+          CurrentCreativity: regeneratedCreativity
+        };
+      });
+
+    }, finalInterval);
+
+    return () => clearInterval(intervalID);
+
+  }, [playerProfile]);
+
+
+  useEffect(() => {
+    
+    if(!playerProfile)
+    {
+      return;
+    }
+
+    const baseInterval = HEALTH_REGEN_INTERVAL_MS;
+    const reductionPerPoint = HEALTH_REGEN_EFFICIENCY_INTERVAL_MS;
+    const minInterval = HEALTH_REGEN_EFFICIENCY_MIN_INTERVAL_MS;
+
+    let effectiveInterval = baseInterval - (playerProfile.Efficiency * reductionPerPoint);
+    let finalInterval = Math.max(minInterval, effectiveInterval);
+
+    
+    const intervalID = setInterval(() => {
+      
+      setPlayerProfile(prevProfile => {
+        
+        let regeneratedHP = prevProfile.CurrentHealth + HEALTH_REGEN_AMOUNT;
+
+        if(regeneratedHP > prevProfile.MaxHealth)
+        {
+          regeneratedHP = prevProfile.MaxHealth;
+        }
+
+        return{
+          ...prevProfile,
+          CurrentHealth: regeneratedHP
+        };
+      });
+    }, finalInterval);
+
+    return () => clearInterval(intervalID);
+  }, [playerProfile]);
+
+  
+
+  useEffect(() => {
+
+    if(!playerProfile) return;
+
     const intervalID = setInterval(() => {
 
       let changesMade = false;
+      let totalHPLost = 0;
+
+      const basePenaltyCurrentLevel = MISSED_DAILY_PENALTY + (playerProfile.Level - 1) * MISSED_DAILY_PENALTY_LEVEL;
+      const effectiveBasePenalty = Math.max(MISSED_DAILY_PENALTY, basePenaltyCurrentLevel);
 
       const updatedDailyTasks = playerProfile.Tasks.Dailies.map((task) => {
 
@@ -665,6 +1342,15 @@ function App() {
 
         if(task.recurringTask && hasExpired)
         {
+          if(task.completed === false)
+          {
+            let taskPenalty = effectiveBasePenalty;
+            let resilienceReduction = Math.floor(playerProfile.Resilience * RESILIENCE_DAMAGE_REDUCTION_PER_POINT);
+            let finalTaskPenalty = Math.max(0, taskPenalty - resilienceReduction);
+            totalHPLost += finalTaskPenalty;
+
+            changesMade = true;
+          }
           changesMade = true;
           const newCreatedTime = currentTime;
           const twentyFourHrsInMs = 24 * 60 * 60 * 1000;
@@ -678,6 +1364,14 @@ function App() {
         }
         else if(hasExpired)
         {
+          if(task.completed === false)
+          {
+            let taskPenalty = effectiveBasePenalty;
+            let resilienceReduction = Math.floor(playerProfile.Resilience * RESILIENCE_DAMAGE_REDUCTION_PER_POINT);
+            let finalTaskPenalty = Math.max(0, taskPenalty - resilienceReduction);
+            totalHPLost += finalTaskPenalty;
+          }
+          
           changesMade = true;
           return null;
         }
@@ -692,13 +1386,31 @@ function App() {
 
       if(changesMade)
       {
-        setPlayerProfile(prevProfile => ({
-          ...prevProfile,
-          Tasks:{
-            ...prevProfile.Tasks,
-            Dailies: finalChanges
+        setPlayerProfile(prevProfile => {
+
+          let newCurrentHP = prevProfile.CurrentHealth - totalHPLost;
+
+          console.log(totalHPLost);
+
+          if(newCurrentHP < 0)
+          {
+            newCurrentHP = 0;
           }
-        }));
+
+          if(newCurrentHP > prevProfile.MaxHealth)
+          {
+            newCurrentHP = prevProfile.MaxHealth;
+          }
+
+          return {
+            ...prevProfile,
+            CurrentHealth: newCurrentHP,
+            Tasks:{
+              ...prevProfile.Tasks,
+              Dailies: finalChanges
+            }
+          }
+        });
       }
     }, 5000);
 
@@ -717,9 +1429,13 @@ function App() {
       {isStatsScreenVisible && <StatsScreen onClose={() => setStatsScreenVisible(false)} playerProfile={playerProfile} onAllocateStat={allocateStatPoint}/>}
       {isDailyModalVisible && <DailyInputModal onClose={() => setDailyModalVisible(false)} onConfirm={handleAddDailyTask} />}
       {isToDoModalVisible && <ToDoInputModal onClose={() => setToDoModalVisible(false)} onConfirm={handleTodoTask} />}
-
+      {notification && <Notification message={notification.message} type={notification.type} onDismiss={dismissNotification} />}
+      {isShopModalVisible && <ShopScreen onClose={() => setShopModalVisisble(false)} onBuyItem={handleBuyItem} showNotification={showNotification} playerProfile={playerProfile} />}
+      {isInventoryVisible && <InventoryScreen onClose={() => setInventoryVisible(false)} onUseItem={handleUseItem} showNotification={showNotification} playerProfile={playerProfile}/>}
+      {isSettingsVisivle && <SettingsScreen onClose={() => setSettingsVisible(false)} onDeleteButton={handleDeleteAccount} playerProfile={playerProfile}/>}
+      {isDeleteVisible && <DeleteConfirmModal onConfirm={handleOnConfirmDelete} onCancel={handleOnCancelDelete}/>}
       
-      <Header onStatsClick={() => setStatsScreenVisible(true)} />
+      <Header onStatsClick={() => setStatsScreenVisible(true)} onShopClick={() => setShopModalVisisble(true)}  onInventoryClick={() => setInventoryVisible(true)} onSettingsClick={() => setSettingsVisible(true)} playerProfile={playerProfile} />
       <CharacterStatus 
         playerProfile={playerProfile} 
         isHidden={isStatusBarHidden} 
@@ -732,6 +1448,7 @@ function App() {
         isHidden={isStatusBarHidden}
         onToggleDaily={handleToggleDaily}
         onToggleToDo={handleToggleToDo}
+        showNotification={showNotification}
       />
     </div>
   );
